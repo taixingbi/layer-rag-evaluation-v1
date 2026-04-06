@@ -1,0 +1,746 @@
+[
+  {
+    "input": "Who is Taixing?",
+    "inference-output": "Taixing Bi is an AI Infrastructure Engineer with over 7 years of experience building production-grade LLM systems, RAG pipelines, and distributed machine learning platforms [1]. Taixing operates at a senior-to-staff engineering level, contributing architecture design, system reliability, and platform scalability [2]. Taixing is best suited for Senior or Staff AI Engineer roles focused on LLM platforms, applied AI infrastructure, and scalable intelligent systems [3]. Taixing's work is strongly production-focused, emphasizing reliability, scalability, and real-world deployment of AI systems [4].",
+    "output": "Taixing is an AI Infrastructure Engineer with over 7 years of experience building production-grade LLM systems, RAG pipelines, and distributed machine learning platforms.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "2236254554825824770",
+        "source": "qa.json",
+        "rrf_score": 0.0323,
+        "excerpt": "Q: Who is Taixing Bi?\nA: Taixing Bi is an AI Infrastructure Engineer with over 7 years of experience building production-grade LLM systems, RAG pipelines, and distributed machine learning platforms."
+      },
+      {
+        "id": "c2",
+        "rank": 2,
+        "chunk_id": "12175292184758817818",
+        "source": "qa.json",
+        "rrf_score": 0.0311,
+        "excerpt": "Q: What level of seniority is Taixing Bi?\nA: Taixing operates at a senior-to-staff engineering level, contributing architecture design, system reliability, and platform scalability."
+      },
+      {
+        "id": "c3",
+        "rank": 3,
+        "chunk_id": "12327880211437614786",
+        "source": "qa.json",
+        "rrf_score": 0.031,
+        "excerpt": "Q: What roles is Taixing Bi best suited for?\nA: Taixing is best suited for Senior or Staff AI Engineer roles focused on LLM platforms, applied AI infrastructure, and scalable intelligent systems."
+      },
+      {
+        "id": "c4",
+        "rank": 4,
+        "chunk_id": "6810870495534174102",
+        "source": "qa.json",
+        "rrf_score": 0.0308,
+        "excerpt": "Q: Is Taixing Bi's work research-focused or production-focused?\nA: Taixing's work is strongly production-focused, emphasizing reliability, scalability, and real-world deployment of AI systems."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-86707884",
+      "request_id": "eva-0-a3e3cb45",
+      "latency_ms": 7222,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.8,
+      "answer_correctness": 0.95,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What is Taixing's current role?",
+    "inference-output": "Taixing's current role is AI Infrastructure Engineer [2].",
+    "output": "AI Infrastructure Engineer",
+    "citations": [
+      {
+        "id": "c2",
+        "rank": 2,
+        "chunk_id": "6749471278101012120",
+        "source": "profile.json",
+        "rrf_score": 0.0318,
+        "excerpt": "id: profile_001\nquestion: What is the candidate's current role?\nanswer: AI Infrastructure Engineer\ncategory: qa\ntags: taixing-bi\ncurrent-role\nai-infra\nsource: profile.json\ndate: 2026-04-04\nauthor: Taixing Bi"
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-9f99df5b",
+      "request_id": "eva-1-9e2da564",
+      "latency_ms": 5031,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "Where is Taixing currently working?",
+    "inference-output": "Taixing is currently working at Saks [3].",
+    "output": "Saks",
+    "citations": [
+      {
+        "id": "c3",
+        "rank": 3,
+        "chunk_id": "7302415807952494321",
+        "source": "profile.json",
+        "rrf_score": 0.0309,
+        "excerpt": "id: profile_002\nquestion: Where is the candidate currently working?\nanswer: Saks\ncategory: qa\ntags: taixing-bi\nemployer\ncurrent-company\nsource: profile.json\ndate: 2026-04-04\nauthor: Taixing Bi"
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-f221abaf",
+      "request_id": "eva-2-d6ae1133",
+      "latency_ms": 4913,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What is Taixing's primary expertise?",
+    "inference-output": "Taixing specializes in deploying scalable LLM infrastructure, including retrieval systems, agent orchestration, and real-time AI data pipelines [1].",
+    "output": "Deploying scalable LLM infrastructure, including retrieval systems, agent orchestration, and real-time AI data pipelines.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "3376289198454411440",
+        "source": "qa.json",
+        "rrf_score": 0.0328,
+        "excerpt": "Q: What is Taixing Bi's primary expertise?\nA: Taixing specializes in deploying scalable LLM infrastructure, including retrieval systems, agent orchestration, and real-time AI data pipelines."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-33ec565c",
+      "request_id": "eva-3-54a63a71",
+      "latency_ms": 5120,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 0.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "Does Taixing have production experience with AI systems?",
+    "inference-output": "Yes, Taixing has extensive production experience with AI systems, including building production-grade LLM systems, RAG pipelines, distributed machine learning platforms, and low-latency inference services [1][3][4].",
+    "output": "Yes, Taixing's work is strongly production-focused, emphasizing reliability, scalability, and real-world deployment of AI systems.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "13531575408719029864",
+        "source": "qa.json",
+        "rrf_score": 0.0325,
+        "excerpt": "Q: Does Taixing Bi have experience scaling AI systems?\nA: Yes, Taixing has built high-throughput event-driven architectures and low-latency inference services designed to scale in enterprise environments."
+      },
+      {
+        "id": "c3",
+        "rank": 3,
+        "chunk_id": "2236254554825824770",
+        "source": "qa.json",
+        "rrf_score": 0.0313,
+        "excerpt": "Q: Who is Taixing Bi?\nA: Taixing Bi is an AI Infrastructure Engineer with over 7 years of experience building production-grade LLM systems, RAG pipelines, and distributed machine learning platforms."
+      },
+      {
+        "id": "c4",
+        "rank": 4,
+        "chunk_id": "6810870495534174102",
+        "source": "qa.json",
+        "rrf_score": 0.0313,
+        "excerpt": "Q: Is Taixing Bi's work research-focused or production-focused?\nA: Taixing's work is strongly production-focused, emphasizing reliability, scalability, and real-world deployment of AI systems."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-427281f8",
+      "request_id": "eva-4-6e70c575",
+      "latency_ms": 6110,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.8,
+      "answer_correctness": 0.9,
+      "context_relevance": 0.8,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "Has Taixing built RAG systems?",
+    "inference-output": "Yes, Taixing has designed and operated enterprise RAG (Retrieval-Augmented Generation) systems used in live production settings.[1]",
+    "output": "Yes, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "4402686071925403022",
+        "source": "qa.json",
+        "rrf_score": 0.0328,
+        "excerpt": "Q: Has Taixing Bi built LLM systems in real business environments?\nA: Yes, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-b667dd13",
+      "request_id": "eva-5-746ea388",
+      "latency_ms": 5431,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What technologies does Taixing commonly use?",
+    "inference-output": "Taixing works extensively with LangChain, LangGraph, Python, Kafka, AWS, vector retrieval systems, and modern ML frameworks like PyTorch and TensorFlow [1].",
+    "output": "LangChain, LangGraph, Python, Kafka, AWS, vector retrieval systems, and ML frameworks like PyTorch and TensorFlow.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "8643450616223362181",
+        "source": "qa.json",
+        "rrf_score": 0.0328,
+        "excerpt": "Q: What technologies does Taixing Bi commonly use?\nA: Taixing works extensively with LangChain, LangGraph, Python, Kafka, AWS, vector retrieval systems, and modern ML frameworks like PyTorch and TensorFlow."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-8b391ab8",
+      "request_id": "eva-6-5e7b0632",
+      "latency_ms": 5469,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "Does Taixing have experience scaling AI systems?",
+    "inference-output": "Yes, Taixing has experience scaling AI systems [1][4].",
+    "output": "Yes, Taixing has built high-throughput event-driven architectures and low-latency inference services designed to scale in enterprise environments.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "13531575408719029864",
+        "source": "qa.json",
+        "rrf_score": 0.0328,
+        "excerpt": "Q: Does Taixing Bi have experience scaling AI systems?\nA: Yes, Taixing has built high-throughput event-driven architectures and low-latency inference services designed to scale in enterprise environments."
+      },
+      {
+        "id": "c4",
+        "rank": 4,
+        "chunk_id": "15606472117711875973",
+        "source": "resume.json",
+        "rrf_score": 0.0305,
+        "excerpt": "Taixing Bi is an AI Infrastructure Engineer with 7+ years of experience building production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith). Taixing has deployed low-latency inference services and built scalable data/streaming platforms using AWS and Kafka.\n\nTaixing Bi has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-33b7c883",
+      "request_id": "eva-7-55870ac9",
+      "latency_ms": 4922,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What roles is Taixing targeting?",
+    "inference-output": "Taixing is targeting roles as AI Infra / Backend / LLM Engineer [2].",
+    "output": "AI Infra / Backend / LLM Engineer",
+    "citations": [
+      {
+        "id": "c2",
+        "rank": 2,
+        "chunk_id": "3401701987387719680",
+        "source": "profile.json",
+        "rrf_score": 0.0325,
+        "excerpt": "id: profile_007\nquestion: What roles is the candidate targeting?\nanswer: AI Infra / Backend / LLM Engineer\ncategory: qa\ntags: taixing-bi\ntarget-role\nai-infra\nllm\nbackend\nsource: profile.json\ndate: 2026-04-04\nauthor: Taixing Bi"
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-1e7bc265",
+      "request_id": "eva-8-58751cee",
+      "latency_ms": 5255,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What is Taixing's visa status?",
+    "inference-output": "Taixing Bi's visa status is H4 EAD [1].",
+    "output": "H4 EAD",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "16310064034107487855",
+        "source": "profile.json",
+        "rrf_score": 0.0328,
+        "excerpt": "id: profile_005\nquestion: What is the candidate's visa status?\nanswer: H4 EAD\ncategory: qa\ntags: taixing-bi\nvisa\nwork-authorization\nh4-ead\nsource: profile.json\ndate: 2026-04-04\nauthor: Taixing Bi"
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-c265ca6e",
+      "request_id": "eva-9-7b33e545",
+      "latency_ms": 4945,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "Does Taixing require visa sponsorship?",
+    "inference-output": "No [1].",
+    "output": "No",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "14760858067756745111",
+        "source": "profile.json",
+        "rrf_score": 0.0328,
+        "excerpt": "id: profile_006\nquestion: Does the candidate require visa sponsorship?\nanswer: No\ncategory: qa\ntags: taixing-bi\nvisa-sponsorship\nno-sponsorship-required\nsource: profile.json\ndate: 2026-04-04\nauthor: Taixing Bi"
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-0a83cb16",
+      "request_id": "eva-10-8e546f8c",
+      "latency_ms": 4722,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What is Taixing's expected salary range?",
+    "inference-output": "Taixing's expected salary range is $180,000 – $240,000 USD [1].",
+    "output": "$180,000 – $240,000 USD",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "13266589530946461751",
+        "source": "profile.json",
+        "rrf_score": 0.0328,
+        "excerpt": "id: profile_004\nquestion: What is the candidate's expected compensation range?\nanswer: $180,000 – $240,000 USD\ncategory: qa\ntags: taixing-bi\nsalary\ncompensation\nsource: profile.json\ndate: 2026-04-04\nauthor: Taixing Bi"
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-b0acc683",
+      "request_id": "eva-11-be9f806f",
+      "latency_ms": 5299,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What work locations is Taixing open to?",
+    "inference-output": "Taixing Bi is open to Remote, Hybrid, or Office work locations [1].",
+    "output": "Remote, Hybrid, or Office",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "8881950604287810423",
+        "source": "profile.json",
+        "rrf_score": 0.0323,
+        "excerpt": "id: profile_003\nquestion: What work locations is the candidate open to?\nanswer: Remote, Hybrid, or Office\ncategory: qa\ntags: taixing-bi\nwork-location\nremote\nhybrid\nsource: profile.json\ndate: 2026-04-04\nauthor: Taixing Bi"
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-415c01cb",
+      "request_id": "eva-12-db38d1c4",
+      "latency_ms": 4919,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What makes Taixing different from a typical ML engineer?",
+    "inference-output": "Taixing focuses not just on models, but on the infrastructure required to make AI reliable, observable, and production-ready [1].",
+    "output": "Taixing focuses not just on models, but on the infrastructure required to make AI reliable, observable, and production-ready.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "14815582371027912694",
+        "source": "qa.json",
+        "rrf_score": 0.0328,
+        "excerpt": "Q: What makes Taixing Bi different from a typical ML engineer?\nA: Taixing focuses not just on models, but on the infrastructure required to make AI reliable, observable, and production-ready."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-20d4bd99",
+      "request_id": "eva-13-e12da1c6",
+      "latency_ms": 5138,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What level of seniority is Taixing?",
+    "inference-output": "Taixing operates at a senior-to-staff engineering level [1].",
+    "output": "Senior to Staff level engineer focusing on architecture, reliability, and scalability.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "12175292184758817818",
+        "source": "qa.json",
+        "rrf_score": 0.0328,
+        "excerpt": "Q: What level of seniority is Taixing Bi?\nA: Taixing operates at a senior-to-staff engineering level, contributing architecture design, system reliability, and platform scalability."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-ed706f55",
+      "request_id": "eva-14-2d7e67d4",
+      "latency_ms": 5021,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What is Taixing's professional summary?",
+    "inference-output": "Taixing Bi is an AI Infrastructure Engineer with over 7 years of experience building production-grade LLM systems, RAG pipelines, and distributed machine learning platforms. [11][14]",
+    "output": "Backend AI Engineer with 7+ years of experience building LLM-powered backend systems, RAG pipelines, agent orchestration, and distributed infrastructure.",
+    "citations": [
+      {
+        "id": "c11",
+        "rank": 11,
+        "chunk_id": "15606472117711875973",
+        "source": "resume.json",
+        "rrf_score": 0.028,
+        "excerpt": "Taixing Bi is an AI Infrastructure Engineer with 7+ years of experience building production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith). Taixing has deployed low-latency inference services and built scalable data/streaming platforms using AWS and Kafka.\n\nTaixing Bi has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012."
+      },
+      {
+        "id": "c14",
+        "rank": 14,
+        "chunk_id": "2236254554825824770",
+        "source": "qa.json",
+        "rrf_score": 0.0278,
+        "excerpt": "Q: Who is Taixing Bi?\nA: Taixing Bi is an AI Infrastructure Engineer with over 7 years of experience building production-grade LLM systems, RAG pipelines, and distributed machine learning platforms."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-64b3ea47",
+      "request_id": "eva-15-cb9e8783",
+      "latency_ms": 14215,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.8,
+      "answer_correctness": 0.9,
+      "context_relevance": 0.8,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What kind of systems has Taixing built?",
+    "inference-output": "Taixing has built production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith) [3]. Additionally, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings [1], as well as high-throughput event-driven architectures and low-latency inference services [2].",
+    "output": "LLM-powered backend systems, RAG pipelines, multi-agent orchestration systems, and distributed AI infrastructure.",
+    "citations": [
+      {
+        "id": "c3",
+        "rank": 3,
+        "chunk_id": "15606472117711875973",
+        "source": "resume.json",
+        "rrf_score": 0.0308,
+        "excerpt": "Taixing Bi is an AI Infrastructure Engineer with 7+ years of experience building production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith). Taixing has deployed low-latency inference services and built scalable data/streaming platforms using AWS and Kafka.\n\nTaixing Bi has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012."
+      },
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "4402686071925403022",
+        "source": "qa.json",
+        "rrf_score": 0.0325,
+        "excerpt": "Q: Has Taixing Bi built LLM systems in real business environments?\nA: Yes, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings."
+      },
+      {
+        "id": "c2",
+        "rank": 2,
+        "chunk_id": "13531575408719029864",
+        "source": "qa.json",
+        "rrf_score": 0.032,
+        "excerpt": "Q: Does Taixing Bi have experience scaling AI systems?\nA: Yes, Taixing has built high-throughput event-driven architectures and low-latency inference services designed to scale in enterprise environments."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-5aaf74b3",
+      "request_id": "eva-16-5cce174b",
+      "latency_ms": 6353,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.8,
+      "answer_correctness": 0.9,
+      "context_relevance": 0.8,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What RAG technologies does Taixing use?",
+    "inference-output": "NOT_FOUND",
+    "output": "FAISS, BM25, hybrid retrieval, embeddings, chunking, cross-encoder reranking, and prompt engineering.",
+    "citations": [],
+    "meta": {
+      "session_id": "eva-session-73be788c",
+      "request_id": "eva-17-12a806c9",
+      "latency_ms": 17205,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.0,
+      "answer_correctness": 0.0,
+      "context_relevance": 0.0,
+      "answer_relevance": 0.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What agent-related experience does Taixing have?",
+    "inference-output": "Taixing has experience with multi-agent AI systems, specifically with LangGraph, which is an orchestration system [1][4].",
+    "output": "Experience with ReAct, multi-agent planning, tool routing, self-reflection, and graph-based agent pipelines.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "3376289198454411440",
+        "source": "qa.json",
+        "rrf_score": 0.0323,
+        "excerpt": "Q: What is Taixing Bi's primary expertise?\nA: Taixing specializes in deploying scalable LLM infrastructure, including retrieval systems, agent orchestration, and real-time AI data pipelines."
+      },
+      {
+        "id": "c4",
+        "rank": 4,
+        "chunk_id": "15606472117711875973",
+        "source": "resume.json",
+        "rrf_score": 0.0305,
+        "excerpt": "Taixing Bi is an AI Infrastructure Engineer with 7+ years of experience building production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith). Taixing has deployed low-latency inference services and built scalable data/streaming platforms using AWS and Kafka.\n\nTaixing Bi has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-2b90d09b",
+      "request_id": "eva-18-d5be0b7c",
+      "latency_ms": 5206,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.6,
+      "answer_correctness": 0.8,
+      "context_relevance": 0.4,
+      "answer_relevance": 0.9,
+      "hallucination_rate_proxy": 0.3
+    }
+  },
+  {
+    "input": "What infrastructure technologies does Taixing work with?",
+    "inference-output": "Taixing works extensively with LangChain, LangGraph, Python, Kafka, AWS, vector retrieval systems, and modern ML frameworks like PyTorch and TensorFlow [1].",
+    "output": "LangChain, LangGraph, Python, TypeScript, Java, AWS, Azure, GCP, DynamoDB, Kafka, Docker, Kubernetes, and API Gateway.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "8643450616223362181",
+        "source": "qa.json",
+        "rrf_score": 0.032,
+        "excerpt": "Q: What technologies does Taixing Bi commonly use?\nA: Taixing works extensively with LangChain, LangGraph, Python, Kafka, AWS, vector retrieval systems, and modern ML frameworks like PyTorch and TensorFlow."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-2b45ccaa",
+      "request_id": "eva-19-b7e545f8",
+      "latency_ms": 5318,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.8,
+      "answer_correctness": 0.9,
+      "context_relevance": 1.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What AI serving frameworks has Taixing used?",
+    "inference-output": "NOT_FOUND",
+    "output": "vLLM, CrewAI, SGLang, and TGI with experience in batching, caching, and token streaming.",
+    "citations": [],
+    "meta": {
+      "session_id": "eva-session-c9647639",
+      "request_id": "eva-20-f0444064",
+      "latency_ms": 17123,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.0,
+      "answer_correctness": 0.0,
+      "context_relevance": 0.0,
+      "answer_relevance": 0.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What observability tools does Taixing use?",
+    "inference-output": "NOT_FOUND",
+    "output": "Datadog, CloudWatch, Prometheus, and Grafana.",
+    "citations": [],
+    "meta": {
+      "session_id": "eva-session-29ebbcb2",
+      "request_id": "eva-21-29be72f7",
+      "latency_ms": 16992,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.0,
+      "answer_correctness": 0.0,
+      "context_relevance": 0.0,
+      "answer_relevance": 0.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What machine learning frameworks does Taixing use?",
+    "inference-output": "Taixing uses PyTorch and TensorFlow for machine learning [1].",
+    "output": "TensorFlow, PyTorch, Keras, XGBoost, scikit-learn, Spark, BigQuery, Hadoop, and HBase.",
+    "citations": [
+      {
+        "id": "c1",
+        "rank": 1,
+        "chunk_id": "8643450616223362181",
+        "source": "qa.json",
+        "rrf_score": 0.0328,
+        "excerpt": "Q: What technologies does Taixing Bi commonly use?\nA: Taixing works extensively with LangChain, LangGraph, Python, Kafka, AWS, vector retrieval systems, and modern ML frameworks like PyTorch and TensorFlow."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-7284ddee",
+      "request_id": "eva-22-3bb951b7",
+      "latency_ms": 4802,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 0.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "Does Taixing have any publications?",
+    "inference-output": "Yes, Taixing has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012 [10].",
+    "output": "Yes, Taixing has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012.",
+    "citations": [
+      {
+        "id": "c10",
+        "rank": 10,
+        "chunk_id": "4402686071925403022",
+        "source": "qa.json",
+        "rrf_score": 0.0289,
+        "excerpt": "Q: Has Taixing Bi built LLM systems in real business environments?\nA: Yes, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings."
+      }
+    ],
+    "meta": {
+      "session_id": "eva-session-3f2d67ba",
+      "request_id": "eva-23-01cd0793",
+      "latency_ms": 13605,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 1.0,
+      "answer_correctness": 1.0,
+      "context_relevance": 0.0,
+      "answer_relevance": 1.0,
+      "hallucination_rate_proxy": 0.0
+    }
+  },
+  {
+    "input": "What is the link to Taixing's publication on impedance-based fault location?",
+    "inference-output": "NOT_FOUND",
+    "output": "https://www.researchgate.net/publication/261239443_A_novel_approach_to_impedance-based_fault_location_for_high_voltage_cables",
+    "citations": [],
+    "meta": {
+      "session_id": "eva-session-b00d8d9c",
+      "request_id": "eva-24-cb658e24",
+      "latency_ms": 16807,
+      "model": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "metrics": {
+      "faithfulness_grounding": 0.0,
+      "answer_correctness": 0.0,
+      "context_relevance": 0.0,
+      "answer_relevance": 0.0,
+      "hallucination_rate_proxy": 1.0
+    }
+  }
+]

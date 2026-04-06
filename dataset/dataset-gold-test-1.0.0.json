@@ -1,0 +1,127 @@
+[
+  {
+    "input": "Who is Taixing?",
+    "inference-output": "",
+    "output": "Taixing is an AI Infrastructure Engineer with over 7 years of experience building production-grade LLM systems, RAG pipelines, and distributed machine learning platforms."
+  },
+  {
+    "input": "What is Taixing's current role?",
+    "inference-output": "",
+    "output": "AI Infrastructure Engineer"
+  },
+  {
+    "input": "Where is Taixing currently working?",
+    "inference-output": "",
+    "output": "Saks"
+  },
+  {
+    "input": "What is Taixing's primary expertise?",
+    "inference-output": "",
+    "output": "Deploying scalable LLM infrastructure, including retrieval systems, agent orchestration, and real-time AI data pipelines."
+  },
+  {
+    "input": "Does Taixing have production experience with AI systems?",
+    "inference-output": "",
+    "output": "Yes, Taixing's work is strongly production-focused, emphasizing reliability, scalability, and real-world deployment of AI systems."
+  },
+  {
+    "input": "Has Taixing built RAG systems?",
+    "inference-output": "",
+    "output": "Yes, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings."
+  },
+  {
+    "input": "What technologies does Taixing commonly use?",
+    "inference-output": "",
+    "output": "LangChain, LangGraph, Python, Kafka, AWS, vector retrieval systems, and ML frameworks like PyTorch and TensorFlow."
+  },
+  {
+    "input": "Does Taixing have experience scaling AI systems?",
+    "inference-output": "",
+    "output": "Yes, Taixing has built high-throughput event-driven architectures and low-latency inference services designed to scale in enterprise environments."
+  },
+  {
+    "input": "What roles is Taixing targeting?",
+    "inference-output": "",
+    "output": "AI Infra / Backend / LLM Engineer"
+  },
+  {
+    "input": "What is Taixing's visa status?",
+    "inference-output": "",
+    "output": "H4 EAD"
+  },
+  {
+    "input": "Does Taixing require visa sponsorship?",
+    "inference-output": "",
+    "output": "No"
+  },
+  {
+    "input": "What is Taixing's expected salary range?",
+    "inference-output": "",
+    "output": "$180,000 – $240,000 USD"
+  },
+  {
+    "input": "What work locations is Taixing open to?",
+    "inference-output": "",
+    "output": "Remote, Hybrid, or Office"
+  },
+  {
+    "input": "What makes Taixing different from a typical ML engineer?",
+    "inference-output": "",
+    "output": "Taixing focuses not just on models, but on the infrastructure required to make AI reliable, observable, and production-ready."
+  },
+  {
+    "input": "What level of seniority is Taixing?",
+    "inference-output": "",
+    "output": "Senior to Staff level engineer focusing on architecture, reliability, and scalability."
+  },
+  {
+    "input": "What is Taixing's professional summary?",
+    "inference-output": "",
+    "output": "Backend AI Engineer with 7+ years of experience building LLM-powered backend systems, RAG pipelines, agent orchestration, and distributed infrastructure."
+  },
+  {
+    "input": "What kind of systems has Taixing built?",
+    "inference-output": "",
+    "output": "LLM-powered backend systems, RAG pipelines, multi-agent orchestration systems, and distributed AI infrastructure."
+  },
+  {
+    "input": "What RAG technologies does Taixing use?",
+    "inference-output": "",
+    "output": "FAISS, BM25, hybrid retrieval, embeddings, chunking, cross-encoder reranking, and prompt engineering."
+  },
+  {
+    "input": "What agent-related experience does Taixing have?",
+    "inference-output": "",
+    "output": "Experience with ReAct, multi-agent planning, tool routing, self-reflection, and graph-based agent pipelines."
+  },
+  {
+    "input": "What infrastructure technologies does Taixing work with?",
+    "inference-output": "",
+    "output": "LangChain, LangGraph, Python, TypeScript, Java, AWS, Azure, GCP, DynamoDB, Kafka, Docker, Kubernetes, and API Gateway."
+  },
+  {
+    "input": "What AI serving frameworks has Taixing used?",
+    "inference-output": "",
+    "output": "vLLM, CrewAI, SGLang, and TGI with experience in batching, caching, and token streaming."
+  },
+  {
+    "input": "What observability tools does Taixing use?",
+    "inference-output": "",
+    "output": "Datadog, CloudWatch, Prometheus, and Grafana."
+  },
+  {
+    "input": "What machine learning frameworks does Taixing use?",
+    "inference-output": "",
+    "output": "TensorFlow, PyTorch, Keras, XGBoost, scikit-learn, Spark, BigQuery, Hadoop, and HBase."
+  },
+  {
+    "input": "Does Taixing have any publications?",
+    "inference-output": "",
+    "output": "Yes, Taixing has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012."
+  },
+  {
+    "input": "What is the link to Taixing's publication on impedance-based fault location?",
+    "inference-output": "",
+    "output": "https://www.researchgate.net/publication/261239443_A_novel_approach_to_impedance-based_fault_location_for_high_voltage_cables"
+  }
+]
