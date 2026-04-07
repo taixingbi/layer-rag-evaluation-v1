@@ -24,7 +24,7 @@ Copy or create a `.env` in the repo root if you use the LLM judge (see **Configu
 **End-to-end** (RAG fill + metrics in one step; writes RAG results then merges metrics into the same `-o` file):
 
 ```bash
-python3 main.py -i dataset/dataset-gold-test-1.0.0.json -o result/dataset-gold-test-1.0.0.json --max-concurrency 40
+python3 main.py -i dataset/dataset-gold-test-1.0.0.json -o result/dataset-gold-test-1.0.0.json --rag-max-concurrency 1 --judge-max-concurrency 32
 ```
 
 Omit `-i` / `-o` to use the defaults under `dataset/` and `result/`.
@@ -37,12 +37,13 @@ Omit `-i` / `-o` to use the defaults under `dataset/` and `result/`.
 | `-c` / `--collection` | `collection_base` sent to RAG (default: `taixing_knowledge`) |
 | `-k`, `--k-max` | Retrieval params (defaults: `5`, `40`) |
 | `--timeout` | Per-request HTTP timeout in seconds (default: `300`) |
-| `--max-concurrency` | Max in-flight RAG requests from this client (default: `20`) |
+| `--rag-max-concurrency` | Max in-flight `/v1/rag/query` requests from this client (default: `20`) |
+| `--judge-max-concurrency` | Max concurrent LLM judge requests (default: same as `--rag-max-concurrency`) |
 | `--max-attempts`, `--retry-backoff` | Retries on transient RAG errors |
 | `--heuristic-only` | Metrics step skips the LLM judge (string/embed heuristics only) |
 | `--judge-max-attempts`, `--judge-retry-backoff` | Judge HTTP retries (defaults also from env) |
 
-`--max-concurrency` only limits how many concurrent `/v1/rag/query` requests this process sends; total time still depends on the server. Progress lines print as each slot starts work.
+`--rag-max-concurrency` only limits how many concurrent `/v1/rag/query` requests the RAG step sends; total time still depends on the server. Progress lines print as each slot starts work. (`rag_query.py` / `metric.py` still use `--max-concurrency` for their respective HTTP clients.)
 
 **Stop the run:** use **Ctrl+C**. Avoid **Ctrl+Z** (suspends the job; you may see `zsh: suspended`).
 

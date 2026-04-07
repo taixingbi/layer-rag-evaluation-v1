@@ -20,12 +20,13 @@ def run(
     k: int,
     k_max: int,
     timeout: float,
-    max_concurrency: int,
+    rag_max_concurrency: int,
     rag_max_attempts: int,
     rag_retry_backoff: float,
     metric_heuristic_only: bool,
     judge_max_attempts: int | None,
     judge_retry_backoff: float | None,
+    judge_max_concurrency: int,
 ) -> int:
     import metric as metric_mod
     import rag_query as rag_mod
@@ -35,7 +36,7 @@ def run(
         return 1
     print(
         f"[rag_query] start  {gold_path} → {rag_out}  "
-        f"base={base_url}  concurrency={max_concurrency}  timeout={timeout}s",
+        f"base={base_url}  rag_concurrency={rag_max_concurrency}  timeout={timeout}s",
         flush=True,
     )
     t0 = time.perf_counter()
@@ -56,7 +57,7 @@ def run(
             "--timeout",
             str(timeout),
             "--max-concurrency",
-            str(max_concurrency),
+            str(rag_max_concurrency),
             "--max-attempts",
             str(rag_max_attempts),
             "--retry-backoff",
@@ -75,6 +76,7 @@ def run(
         margv.extend(["--max-attempts", str(judge_max_attempts)])
     if judge_retry_backoff is not None:
         margv.extend(["--retry-backoff", str(judge_retry_backoff)])
+    margv.extend(["--max-concurrency", str(max(1, judge_max_concurrency))])
     rc = metric_mod.main(margv)
     print(f"[metric]    finish elapsed {time.perf_counter() - t1:.2f}s", flush=True)
     return rc
@@ -111,11 +113,12 @@ if __name__ == "__main__":
     p.add_argument("--k-max", type=int, default=40)
     p.add_argument("--timeout", type=float, default=300.0)
     p.add_argument(
-        "--max-concurrency",
+        "--rag-max-concurrency",
         type=int,
         default=_MAX_CONCURRENCY_DEFAULT,
         metavar="N",
-        help=f"Max concurrent RAG requests (default: {_MAX_CONCURRENCY_DEFAULT})",
+        dest="rag_max_concurrency",
+        help=f"Max concurrent /v1/rag/query requests (default: {_MAX_CONCURRENCY_DEFAULT})",
     )
     p.add_argument(
         "--max-attempts",
@@ -146,11 +149,23 @@ if __name__ == "__main__":
         help="LLM judge: base retry delay seconds (default: env LLM_JUDGE_RETRY_BACKOFF or 1.0)",
     )
     p.add_argument(
+        "--judge-max-concurrency",
+        type=int,
+        default=None,
+        metavar="N",
+        help="LLM judge: max concurrent HTTP requests (default: same as --rag-max-concurrency)",
+    )
+    p.add_argument(
         "--heuristic-only",
         action="store_true",
         help="Skip LLM judge in metric step (string/embed heuristics only)",
     )
     args = p.parse_args()
+    judge_conc = (
+        args.judge_max_concurrency
+        if args.judge_max_concurrency is not None
+        else args.rag_max_concurrency
+    )
     raise SystemExit(
         run(
             args.i,
@@ -160,11 +175,12 @@ if __name__ == "__main__":
             k=args.k,
             k_max=args.k_max,
             timeout=args.timeout,
-            max_concurrency=args.max_concurrency,
+            rag_max_concurrency=args.rag_max_concurrency,
             rag_max_attempts=max(1, args.max_attempts),
             rag_retry_backoff=max(0.0, args.retry_backoff),
             metric_heuristic_only=args.heuristic_only,
             judge_max_attempts=args.judge_max_attempts,
             judge_retry_backoff=args.judge_retry_backoff,
+            judge_max_concurrency=max(1, judge_conc),
         )
     )

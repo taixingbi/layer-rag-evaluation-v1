@@ -38,9 +38,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-86707884",
-      "request_id": "eva-0-a3e3cb45",
-      "latency_ms": 7222,
+      "session_id": "eva-session-d4ba08d3",
+      "request_id": "eva-0-681684c1",
+      "latency_ms": 7012,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -66,9 +66,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-9f99df5b",
-      "request_id": "eva-1-9e2da564",
-      "latency_ms": 5031,
+      "session_id": "eva-session-3c279351",
+      "request_id": "eva-1-988ff9fd",
+      "latency_ms": 4949,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -94,9 +94,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-f221abaf",
-      "request_id": "eva-2-d6ae1133",
-      "latency_ms": 4913,
+      "session_id": "eva-session-a53e520c",
+      "request_id": "eva-2-7944d3fd",
+      "latency_ms": 5012,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -122,9 +122,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-33ec565c",
-      "request_id": "eva-3-54a63a71",
-      "latency_ms": 5120,
+      "session_id": "eva-session-7a97d3a9",
+      "request_id": "eva-3-33e7d3d4",
+      "latency_ms": 5106,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -137,7 +137,7 @@
   },
   {
     "input": "Does Taixing have production experience with AI systems?",
-    "inference-output": "Yes, Taixing has extensive production experience with AI systems, including building production-grade LLM systems, RAG pipelines, distributed machine learning platforms, and low-latency inference services [1][3][4].",
+    "inference-output": "Yes, Taixing has extensive production experience with AI systems, including building production-grade LLM systems, RAG pipelines, distributed machine learning platforms, and low-latency inference services [1][3][4][5].",
     "output": "Yes, Taixing's work is strongly production-focused, emphasizing reliability, scalability, and real-world deployment of AI systems.",
     "citations": [
       {
@@ -163,12 +163,20 @@
         "source": "qa.json",
         "rrf_score": 0.0313,
         "excerpt": "Q: Is Taixing Bi's work research-focused or production-focused?\nA: Taixing's work is strongly production-focused, emphasizing reliability, scalability, and real-world deployment of AI systems."
+      },
+      {
+        "id": "c5",
+        "rank": 5,
+        "chunk_id": "15606472117711875973",
+        "source": "resume.json",
+        "rrf_score": 0.0306,
+        "excerpt": "Taixing Bi is an AI Infrastructure Engineer with 7+ years of experience building production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith). Taixing has deployed low-latency inference services and built scalable data/streaming platforms using AWS and Kafka.\n\nTaixing Bi has a publication titled 'A Novel Approach to Impedance-based Fault Location for High Voltage Cables', published at IEEE IAS in 2012."
       }
     ],
     "meta": {
-      "session_id": "eva-session-427281f8",
-      "request_id": "eva-4-6e70c575",
-      "latency_ms": 6110,
+      "session_id": "eva-session-1321e003",
+      "request_id": "eva-4-4168559d",
+      "latency_ms": 6256,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -194,9 +202,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-b667dd13",
-      "request_id": "eva-5-746ea388",
-      "latency_ms": 5431,
+      "session_id": "eva-session-e095c303",
+      "request_id": "eva-5-335e3f55",
+      "latency_ms": 5123,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -222,9 +230,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-8b391ab8",
-      "request_id": "eva-6-5e7b0632",
-      "latency_ms": 5469,
+      "session_id": "eva-session-cff2ca68",
+      "request_id": "eva-6-ed55337a",
+      "latency_ms": 5514,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -258,9 +266,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-33b7c883",
-      "request_id": "eva-7-55870ac9",
-      "latency_ms": 4922,
+      "session_id": "eva-session-36da3c20",
+      "request_id": "eva-7-716ed3ea",
+      "latency_ms": 4847,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -273,7 +281,7 @@
   },
   {
     "input": "What roles is Taixing targeting?",
-    "inference-output": "Taixing is targeting roles as AI Infra / Backend / LLM Engineer [2].",
+    "inference-output": "Taixing is targeting AI Infra / Backend / LLM Engineer roles. [2]",
     "output": "AI Infra / Backend / LLM Engineer",
     "citations": [
       {
@@ -286,9 +294,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-1e7bc265",
-      "request_id": "eva-8-58751cee",
-      "latency_ms": 5255,
+      "session_id": "eva-session-a99acf52",
+      "request_id": "eva-8-bd68d06b",
+      "latency_ms": 5284,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -301,7 +309,7 @@
   },
   {
     "input": "What is Taixing's visa status?",
-    "inference-output": "Taixing Bi's visa status is H4 EAD [1].",
+    "inference-output": "Taixing's visa status is H4 EAD [1].",
     "output": "H4 EAD",
     "citations": [
       {
@@ -314,9 +322,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-c265ca6e",
-      "request_id": "eva-9-7b33e545",
-      "latency_ms": 4945,
+      "session_id": "eva-session-832f05f9",
+      "request_id": "eva-9-72443b51",
+      "latency_ms": 4856,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -329,7 +337,7 @@
   },
   {
     "input": "Does Taixing require visa sponsorship?",
-    "inference-output": "No [1].",
+    "inference-output": "No [1]",
     "output": "No",
     "citations": [
       {
@@ -342,9 +350,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-0a83cb16",
-      "request_id": "eva-10-8e546f8c",
-      "latency_ms": 4722,
+      "session_id": "eva-session-5ce49e37",
+      "request_id": "eva-10-dd816a8f",
+      "latency_ms": 5376,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -357,7 +365,7 @@
   },
   {
     "input": "What is Taixing's expected salary range?",
-    "inference-output": "Taixing's expected salary range is $180,000 – $240,000 USD [1].",
+    "inference-output": "$180,000 – $240,000 USD [1]",
     "output": "$180,000 – $240,000 USD",
     "citations": [
       {
@@ -370,9 +378,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-b0acc683",
-      "request_id": "eva-11-be9f806f",
-      "latency_ms": 5299,
+      "session_id": "eva-session-16624373",
+      "request_id": "eva-11-d787b85a",
+      "latency_ms": 5116,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -398,9 +406,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-415c01cb",
-      "request_id": "eva-12-db38d1c4",
-      "latency_ms": 4919,
+      "session_id": "eva-session-b327f055",
+      "request_id": "eva-12-e22a84ae",
+      "latency_ms": 5117,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -426,9 +434,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-20d4bd99",
-      "request_id": "eva-13-e12da1c6",
-      "latency_ms": 5138,
+      "session_id": "eva-session-9f20c84a",
+      "request_id": "eva-13-4d6557bf",
+      "latency_ms": 5331,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -454,9 +462,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-ed706f55",
-      "request_id": "eva-14-2d7e67d4",
-      "latency_ms": 5021,
+      "session_id": "eva-session-c3e65b06",
+      "request_id": "eva-14-ff607935",
+      "latency_ms": 4761,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -490,9 +498,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-64b3ea47",
-      "request_id": "eva-15-cb9e8783",
-      "latency_ms": 14215,
+      "session_id": "eva-session-12da3c15",
+      "request_id": "eva-15-f3e441f5",
+      "latency_ms": 13978,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -505,7 +513,7 @@
   },
   {
     "input": "What kind of systems has Taixing built?",
-    "inference-output": "Taixing has built production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith) [3]. Additionally, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings [1], as well as high-throughput event-driven architectures and low-latency inference services [2].",
+    "inference-output": "Taixing has built production LLM systems, including RAG pipelines, multi-agent orchestration (LangGraph), and LLM evaluation/observability (LangSmith) [3]. Additionally, Taixing has designed and operated enterprise RAG and multi-agent AI systems used in live production settings [1], as well as high-throughput event-driven architectures and low-latency inference services designed to scale in enterprise environments [2].",
     "output": "LLM-powered backend systems, RAG pipelines, multi-agent orchestration systems, and distributed AI infrastructure.",
     "citations": [
       {
@@ -534,9 +542,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-5aaf74b3",
-      "request_id": "eva-16-5cce174b",
-      "latency_ms": 6353,
+      "session_id": "eva-session-1cca3976",
+      "request_id": "eva-16-dc4fd394",
+      "latency_ms": 6550,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -553,9 +561,9 @@
     "output": "FAISS, BM25, hybrid retrieval, embeddings, chunking, cross-encoder reranking, and prompt engineering.",
     "citations": [],
     "meta": {
-      "session_id": "eva-session-73be788c",
-      "request_id": "eva-17-12a806c9",
-      "latency_ms": 17205,
+      "session_id": "eva-session-729ed3da",
+      "request_id": "eva-17-b2940d93",
+      "latency_ms": 16960,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -568,7 +576,7 @@
   },
   {
     "input": "What agent-related experience does Taixing have?",
-    "inference-output": "Taixing has experience with multi-agent AI systems, specifically with LangGraph, which is an orchestration system [1][4].",
+    "inference-output": "Taixing has experience with multi-agent AI systems, specifically with LangGraph, which is a form of agent orchestration [1][4].",
     "output": "Experience with ReAct, multi-agent planning, tool routing, self-reflection, and graph-based agent pipelines.",
     "citations": [
       {
@@ -589,17 +597,17 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-2b90d09b",
-      "request_id": "eva-18-d5be0b7c",
-      "latency_ms": 5206,
+      "session_id": "eva-session-54222ed4",
+      "request_id": "eva-18-9be77f68",
+      "latency_ms": 5531,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
       "faithfulness_grounding": 0.6,
       "answer_correctness": 0.8,
-      "context_relevance": 0.4,
+      "context_relevance": 0.8,
       "answer_relevance": 0.9,
-      "hallucination_rate_proxy": 0.3
+      "hallucination_rate_proxy": 0.2
     }
   },
   {
@@ -617,9 +625,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-2b45ccaa",
-      "request_id": "eva-19-b7e545f8",
-      "latency_ms": 5318,
+      "session_id": "eva-session-9be2e785",
+      "request_id": "eva-19-888735c1",
+      "latency_ms": 5351,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -636,9 +644,9 @@
     "output": "vLLM, CrewAI, SGLang, and TGI with experience in batching, caching, and token streaming.",
     "citations": [],
     "meta": {
-      "session_id": "eva-session-c9647639",
-      "request_id": "eva-20-f0444064",
-      "latency_ms": 17123,
+      "session_id": "eva-session-712b4001",
+      "request_id": "eva-20-458bbde0",
+      "latency_ms": 16679,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -655,9 +663,9 @@
     "output": "Datadog, CloudWatch, Prometheus, and Grafana.",
     "citations": [],
     "meta": {
-      "session_id": "eva-session-29ebbcb2",
-      "request_id": "eva-21-29be72f7",
-      "latency_ms": 16992,
+      "session_id": "eva-session-917813a6",
+      "request_id": "eva-21-0653dec8",
+      "latency_ms": 17207,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -670,7 +678,7 @@
   },
   {
     "input": "What machine learning frameworks does Taixing use?",
-    "inference-output": "Taixing uses PyTorch and TensorFlow for machine learning [1].",
+    "inference-output": "Taixing uses PyTorch and TensorFlow as part of their machine learning framework expertise [1].",
     "output": "TensorFlow, PyTorch, Keras, XGBoost, scikit-learn, Spark, BigQuery, Hadoop, and HBase.",
     "citations": [
       {
@@ -683,15 +691,15 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-7284ddee",
-      "request_id": "eva-22-3bb951b7",
-      "latency_ms": 4802,
+      "session_id": "eva-session-2de18c95",
+      "request_id": "eva-22-b0e75353",
+      "latency_ms": 5127,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
-      "faithfulness_grounding": 1.0,
+      "faithfulness_grounding": 0.8,
       "answer_correctness": 1.0,
-      "context_relevance": 0.0,
+      "context_relevance": 0.8,
       "answer_relevance": 1.0,
       "hallucination_rate_proxy": 0.0
     }
@@ -711,9 +719,9 @@
       }
     ],
     "meta": {
-      "session_id": "eva-session-3f2d67ba",
-      "request_id": "eva-23-01cd0793",
-      "latency_ms": 13605,
+      "session_id": "eva-session-6c6ff5f2",
+      "request_id": "eva-23-b7697f71",
+      "latency_ms": 13502,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {
@@ -730,9 +738,9 @@
     "output": "https://www.researchgate.net/publication/261239443_A_novel_approach_to_impedance-based_fault_location_for_high_voltage_cables",
     "citations": [],
     "meta": {
-      "session_id": "eva-session-b00d8d9c",
-      "request_id": "eva-24-cb658e24",
-      "latency_ms": 16807,
+      "session_id": "eva-session-eb7246cf",
+      "request_id": "eva-24-e1978134",
+      "latency_ms": 17277,
       "model": "Qwen/Qwen2.5-7B-Instruct"
     },
     "metrics": {

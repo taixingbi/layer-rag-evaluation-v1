@@ -27,12 +27,12 @@ Example judge API (one-shot)::
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import math
 import os
 import re
 import sys
-import time
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
@@ -55,6 +55,7 @@ _DEFAULT_IN = _EVA_ROOT / "result" / "dataset-gold-test-1.0.0.json"
 _DEFAULT_OUT = _EVA_ROOT / "result" / "dataset-gold-test-eva-1.0.0.json"
 _DEFAULT_JUDGE_MAX_ATTEMPTS = 3
 _DEFAULT_JUDGE_RETRY_BACKOFF_SEC = 1.0
+_MAX_CONCURRENCY_DEFAULT = 20
 
 
 def _retryable_judge_http(code: int) -> bool:
@@ -278,10 +279,10 @@ def _finalize_judge_metrics(d: dict[str, Any]) -> dict[str, Any] | None:
     return out
 
 
-def _llm_judge_row(
+async def _llm_judge_row_async(
     row: dict,
     *,
-    client: httpx.Client,
+    client: httpx.AsyncClient,
     base_url: str,
     model: str,
     max_tokens: int,
@@ -332,7 +333,7 @@ Citation excerpts:
     attempts = max(1, max_attempts)
     for attempt in range(attempts):
         try:
-            r = client.post(
+            r = await client.post(
                 url,
                 json=req_json,
                 headers={"Content-Type": "application/json"},
@@ -345,7 +346,7 @@ Citation excerpts:
                         f"(attempt {attempt + 1}/{attempts})",
                         flush=True,
                     )
-                    time.sleep(delay)
+                    await asyncio.sleep(delay)
                     continue
                 r.raise_for_status()
             payload = r.json()
@@ -358,7 +359,7 @@ Citation excerpts:
                         f"(attempt {attempt + 1}/{attempts})",
                         flush=True,
                     )
-                    time.sleep(delay)
+                    await asyncio.sleep(delay)
                     continue
                 return None
             msg = (choices[0] or {}).get("message") or {}
@@ -372,7 +373,7 @@ Citation excerpts:
                         f"(attempt {attempt + 1}/{attempts})",
                         flush=True,
                     )
-                    time.sleep(delay)
+                    await asyncio.sleep(delay)
                     continue
                 return None
             m = _finalize_judge_metrics(parsed)
@@ -384,7 +385,7 @@ Citation excerpts:
                         f"(attempt {attempt + 1}/{attempts})",
                         flush=True,
                     )
-                    time.sleep(delay)
+                    await asyncio.sleep(delay)
                     continue
                 return None
             return m
@@ -398,7 +399,7 @@ Citation excerpts:
                 f"(attempt {attempt + 1}/{attempts})",
                 flush=True,
             )
-            time.sleep(delay)
+            await asyncio.sleep(delay)
         except (httpx.HTTPStatusError, KeyError, TypeError, ValueError, json.JSONDecodeError) as e:
             if attempt + 1 >= attempts:
                 print(f"Warning: LLM judge failed for row: {e}", file=sys.stderr)
@@ -409,8 +410,81 @@ Citation excerpts:
                 f"(attempt {attempt + 1}/{attempts})",
                 flush=True,
             )
-            time.sleep(delay)
+            await asyncio.sleep(delay)
     return None
+
+
+async def _process_judge_row(
+    idx: int,
+    row: dict,
+    *,
+    n: int,
+    client: httpx.AsyncClient,
+    sem: asyncio.Semaphore,
+    base_url: str,
+    model: str,
+    max_tokens: int,
+    max_attempts: int,
+    retry_backoff_sec: float,
+) -> None:
+    pred = _prediction_text(row)
+    if not pred:
+        row["metrics"] = _metrics_llm_unavailable(reason="empty_prediction")
+        return
+    async with sem:
+        print(f"[metric] judge [{idx + 1}/{n}] ...", flush=True)
+        m = await _llm_judge_row_async(
+            row,
+            client=client,
+            base_url=base_url,
+            model=model,
+            max_tokens=max_tokens,
+            max_attempts=max_attempts,
+            retry_backoff_sec=retry_backoff_sec,
+        )
+        if m is None:
+            row["metrics"] = _metrics_llm_unavailable(reason="parse_or_http")
+        else:
+            row["metrics"] = m
+
+
+async def _attach_metrics_llm_only_async(
+    rows: list[dict],
+    *,
+    base_url: str,
+    model: str,
+    max_tokens: int,
+    timeout: float,
+    max_attempts: int,
+    retry_backoff_sec: float,
+    max_concurrency: int,
+) -> None:
+    n = len(rows)
+    cap = max(1, min(max_concurrency, n))
+    sem = asyncio.Semaphore(cap)
+    limits = httpx.Limits(max_connections=cap + 5, max_keepalive_connections=cap + 5)
+    print(
+        f"[metric] LLM judge (sole scorer) → {base_url} model={model} concurrency={cap}",
+        flush=True,
+    )
+    async with httpx.AsyncClient(timeout=timeout, limits=limits) as client:
+        await asyncio.gather(
+            *(
+                _process_judge_row(
+                    idx,
+                    row,
+                    n=n,
+                    client=client,
+                    sem=sem,
+                    base_url=base_url,
+                    model=model,
+                    max_tokens=max_tokens,
+                    max_attempts=max_attempts,
+                    retry_backoff_sec=retry_backoff_sec,
+                )
+                for idx, row in enumerate(rows)
+            )
+        )
 
 
 def _attach_metrics_llm_only(
@@ -422,29 +496,20 @@ def _attach_metrics_llm_only(
     timeout: float,
     max_attempts: int,
     retry_backoff_sec: float,
+    max_concurrency: int,
 ) -> None:
-    n = len(rows)
-    print(f"[metric] LLM judge (sole scorer) → {base_url} model={model}", flush=True)
-    with httpx.Client(timeout=timeout) as client:
-        for idx, row in enumerate(rows):
-            print(f"[metric] judge [{idx + 1}/{n}] ...", flush=True)
-            pred = _prediction_text(row)
-            if not pred:
-                row["metrics"] = _metrics_llm_unavailable(reason="empty_prediction")
-                continue
-            m = _llm_judge_row(
-                row,
-                client=client,
-                base_url=base_url,
-                model=model,
-                max_tokens=max_tokens,
-                max_attempts=max_attempts,
-                retry_backoff_sec=retry_backoff_sec,
-            )
-            if m is None:
-                row["metrics"] = _metrics_llm_unavailable(reason="parse_or_http")
-            else:
-                row["metrics"] = m
+    asyncio.run(
+        _attach_metrics_llm_only_async(
+            rows,
+            base_url=base_url,
+            model=model,
+            max_tokens=max_tokens,
+            timeout=timeout,
+            max_attempts=max_attempts,
+            retry_backoff_sec=retry_backoff_sec,
+            max_concurrency=max_concurrency,
+        )
+    )
 
 
 def _attach_metrics_heuristic(rows: list[dict]) -> None:
@@ -464,6 +529,7 @@ def attach_metrics(
     heuristic_only: bool = False,
     judge_max_attempts: int | None = None,
     judge_retry_backoff_sec: float | None = None,
+    judge_max_concurrency: int | None = None,
 ) -> None:
     """Add ``metrics`` to each row in place. LLM judge is the sole scorer when URL is set."""
     load_dotenv(_EVA_ROOT / ".env")
@@ -497,6 +563,11 @@ def attach_metrics(
         if judge_retry_backoff_sec is not None
         else float(os.getenv("LLM_JUDGE_RETRY_BACKOFF", str(_DEFAULT_JUDGE_RETRY_BACKOFF_SEC)))
     )
+    j_conc = (
+        judge_max_concurrency
+        if judge_max_concurrency is not None
+        else int(os.getenv("LLM_JUDGE_MAX_CONCURRENCY", str(_MAX_CONCURRENCY_DEFAULT)))
+    )
     _attach_metrics_llm_only(
         rows,
         base_url=base,
@@ -505,6 +576,7 @@ def attach_metrics(
         timeout=timeout,
         max_attempts=max(1, j_attempts),
         retry_backoff_sec=max(0.0, j_backoff),
+        max_concurrency=max(1, j_conc),
     )
 
 
@@ -545,6 +617,13 @@ def main(argv: list[str] | None = None) -> int:
         metavar="SEC",
         help="LLM judge retry base delay seconds (default: env LLM_JUDGE_RETRY_BACKOFF or 1.0)",
     )
+    p.add_argument(
+        "--max-concurrency",
+        type=int,
+        default=None,
+        metavar="N",
+        help=f"Max concurrent judge HTTP requests (default: env LLM_JUDGE_MAX_CONCURRENCY or {_MAX_CONCURRENCY_DEFAULT})",
+    )
     args = p.parse_args(argv)
 
     in_path = args.in_path
@@ -564,6 +643,7 @@ def main(argv: list[str] | None = None) -> int:
         heuristic_only=args.heuristic_only,
         judge_max_attempts=args.max_attempts,
         judge_retry_backoff_sec=args.retry_backoff,
+        judge_max_concurrency=args.max_concurrency,
     )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
