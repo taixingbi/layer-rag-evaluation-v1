@@ -329,6 +329,7 @@ Citation excerpts:
         "messages": [{"role": "user", "content": user_msg}],
         "max_tokens": max_tokens,
         "temperature": 0.1,
+        "stream": False,
     }
     attempts = max(1, max_attempts)
     for attempt in range(attempts):
