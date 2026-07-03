@@ -1,4 +1,4 @@
-"""Layer RAG evaluation: batch gold eval, retrieval metrics, LLM-as-judge."""
+"""Layer RAG evaluation: gold JSONL generation and batch RAG eval with optional LLM judge."""
 
 from importlib.metadata import PackageNotFoundError, version
 

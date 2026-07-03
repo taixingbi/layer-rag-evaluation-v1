@@ -106,6 +106,26 @@ def test_summarize_heuristic_quality_keys():
     assert summary["must_contain_pass_rate"] == 1.0
 
 
+def test_summarize_includes_llm_judge_when_present():
+    results = [
+        {
+            "ok": True,
+            "llm_judge": {
+                "correct": True,
+                "faithful": True,
+                "complete": False,
+                "precise": True,
+                "cited": True,
+            },
+            "llm_judge_score": 0.8,
+        }
+    ]
+    summary = summarize(results, recall_ks=[5])
+    assert summary["llm_judge_scored_rows"] == 1
+    assert summary["llm_judge_score_mean"] == 0.8
+    assert summary["llm_judge_complete_rate"] == 0.0
+
+
 def test_baseline_fixture_loads():
     baseline = json.loads(BASELINE_FIXTURE.read_text(encoding="utf-8"))
     assert baseline["rag_calls_failed"] == 0

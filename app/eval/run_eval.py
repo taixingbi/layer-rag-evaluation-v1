@@ -1,7 +1,7 @@
 """Gold dataset evaluation against the RAG ``/v1/rag/query`` API.
 
 Reads JSONL rows (see ``docs/eval.md``), posts each ``question``, then scores retrieval,
-``must_contain``, citations, and heuristic answer-quality proxies.
+``must_contain``, citations, heuristic proxies, and optional LLM-as-judge answer quality.
 """
 
 from __future__ import annotations
@@ -18,11 +18,18 @@ from typing import Any
 from app.core.config import (
     DEFAULT_K,
     DEFAULT_K_MAX,
+    DEFAULT_LLM_JUDGE_CONCURRENCY,
     DEFAULT_RAG_CONCURRENCY,
+    get_llm_judge_api_key,
+    get_llm_judge_base_url,
+    get_llm_judge_max_tokens,
+    get_llm_judge_model,
+    get_llm_judge_timeout,
     get_rag_base_url,
     get_rag_collection_base,
 )
 from app.eval.baseline import compare_summaries, load_baseline
+from app.eval.llm_judge import judge_answer_async
 from app.eval.metadata import build_run_metadata
 from app.eval.scoring import (
     citation_sources,
@@ -97,10 +104,18 @@ async def _evaluate_all(
     limit: int | None,
     request_retrieval_hits: bool,
     recall_ks: list[int],
+    enable_llm_judge: bool = False,
+    llm_judge_base_url: str = "",
+    llm_judge_model: str = "",
+    llm_judge_api_key: str | None = None,
+    llm_judge_concurrency: int = DEFAULT_LLM_JUDGE_CONCURRENCY,
+    llm_judge_max_tokens: int = 400,
+    llm_judge_timeout: float = 120.0,
 ) -> list[dict[str, Any]]:
     import httpx
 
     sem = asyncio.Semaphore(max(1, concurrency))
+    judge_sem = asyncio.Semaphore(max(1, llm_judge_concurrency))
     work = rows if limit is None else rows[: max(0, limit)]
 
     async with httpx.AsyncClient() as client:
@@ -193,6 +208,33 @@ async def _evaluate_all(
                     recall_ks=recall_ks,
                 )
             )
+
+            if enable_llm_judge:
+                gold_answer = str(row.get("answer") or "")
+                expected_behavior = row.get("expected_behavior")
+                if expected_behavior is not None:
+                    expected_behavior = str(expected_behavior)
+                try:
+                    async with judge_sem:
+                        out.update(
+                            await judge_answer_async(
+                                question=question,
+                                gold_answer=gold_answer,
+                                model_answer=answer,
+                                must_contain=must_list,
+                                citation_sources=sorted(cite_sources),
+                                expected_behavior=expected_behavior,
+                                base_url=llm_judge_base_url,
+                                model=llm_judge_model,
+                                api_key=llm_judge_api_key,
+                                max_tokens=llm_judge_max_tokens,
+                                timeout=llm_judge_timeout,
+                                client=client,
+                            )
+                        )
+                except Exception as exc:
+                    out["llm_judge_error"] = str(exc)
+
             return out
 
         tasks = [_one(i, row) for i, row in enumerate(work)]
@@ -249,7 +291,42 @@ def parse_args() -> argparse.Namespace:
         default=0.05,
         help="Max allowed drop vs --baseline-json for higher-is-better metrics (default: %(default)s).",
     )
+    p.add_argument(
+        "--enable-llm-judge",
+        action="store_true",
+        help="Score answers with LLM-as-judge (same run; requires chat API URL).",
+    )
+    p.add_argument(
+        "--llm-judge-base-url",
+        default="",
+        help="Chat API base for judge. Default: LLM_JUDGE_URL / INFERENCE_URL / CHAT_BASE_URL from .env",
+    )
+    p.add_argument(
+        "--llm-judge-model",
+        default="",
+        help="Judge model name. Default: LLM_JUDGE_MODEL / CHAT_MODEL from .env",
+    )
+    p.add_argument(
+        "--llm-judge-concurrency",
+        type=int,
+        default=DEFAULT_LLM_JUDGE_CONCURRENCY,
+        help="Max concurrent LLM judge requests (default: %(default)s).",
+    )
     return p.parse_args()
+
+
+def _resolve_llm_judge_base_url(cli_value: str | None, *, required: bool) -> str:
+    explicit = (cli_value or "").strip().rstrip("/")
+    if explicit:
+        return explicit
+    return get_llm_judge_base_url(required=required)
+
+
+def _resolve_llm_judge_model(cli_value: str | None) -> str:
+    explicit = (cli_value or "").strip()
+    if explicit:
+        return explicit
+    return get_llm_judge_model()
 
 
 def main() -> None:
@@ -271,6 +348,16 @@ def main() -> None:
     limit = None if int(args.limit) <= 0 else int(args.limit)
     recall_ks = parse_recall_ks(str(args.recall_at_k)) or [5, 10, 40]
     request_retrieval_hits = not bool(args.skip_retrieval_hits)
+    enable_llm_judge = bool(args.enable_llm_judge)
+
+    llm_judge_base_url = ""
+    llm_judge_model = ""
+    if enable_llm_judge:
+        try:
+            llm_judge_base_url = _resolve_llm_judge_base_url(args.llm_judge_base_url or None, required=True)
+            llm_judge_model = _resolve_llm_judge_model(args.llm_judge_model or None)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
 
     results = asyncio.run(
         _evaluate_all(
@@ -283,6 +370,13 @@ def main() -> None:
             limit=limit,
             request_retrieval_hits=request_retrieval_hits,
             recall_ks=recall_ks,
+            enable_llm_judge=enable_llm_judge,
+            llm_judge_base_url=llm_judge_base_url,
+            llm_judge_model=llm_judge_model,
+            llm_judge_api_key=get_llm_judge_api_key(),
+            llm_judge_concurrency=int(args.llm_judge_concurrency),
+            llm_judge_max_tokens=get_llm_judge_max_tokens(),
+            llm_judge_timeout=get_llm_judge_timeout(),
         )
     )
     run_meta = build_run_metadata(
@@ -294,6 +388,10 @@ def main() -> None:
         recall_ks=recall_ks,
         concurrency=int(args.concurrency),
         skip_retrieval_hits=bool(args.skip_retrieval_hits),
+        enable_llm_judge=enable_llm_judge,
+        llm_judge_concurrency=int(args.llm_judge_concurrency) if enable_llm_judge else None,
+        llm_judge_model=llm_judge_model if enable_llm_judge else None,
+        llm_judge_base_url=llm_judge_base_url if enable_llm_judge else None,
     )
     summary = summarize(results, recall_ks=recall_ks, run_meta=run_meta)
 

@@ -15,7 +15,8 @@ End-to-end workflow and CLI reference: ingest KB → generate gold JSONL → sco
 | Layer | Module | Signals |
 |-------|--------|---------|
 | **Retrieval** | `app.eval.run_eval` | Rank, RR, MRR, Recall@k / Precision@k / NDCG@k / F1@k from `retrieval_hits` |
-| **Answer** | `app.eval.run_eval` | `must_contain`, citation `source`, **`heuristic_quality_*`** (proxy rules, not LLM judge) |
+| **Answer (heuristic)** | `app.eval.run_eval` | `must_contain`, citation `source`, `heuristic_quality_*` (fast proxy) |
+| **Answer (LLM judge)** | `app.eval.run_eval --enable-llm-judge` | `llm_judge_*` semantic scores in the same run |
 | **Latency** | `app.eval.run_eval` | `latency_ms` per row; p50 / p95 / p99 in summary |
 
 ---
@@ -167,7 +168,8 @@ Runs **`POST {rag_base_url}/v1/rag/query`** per gold row, then scores the respon
 2. **`source` (single-hop)** — Gold `source` must appear in a citation (unless `multi` / `negative`).
 3. **`required_sources` (multi-hop)** — Every listed source in citations.
 4. **`retrieval_hits`** — Gold UUID `id` vs `retrieval_hits[].chunk_id` in `retrieve` / `rerank` → rank, RR, MRR, Recall@k, Precision@k, NDCG@k, F1@k (`--recall-at-k`, default `5,10,40`). Non-UUID ids → `retrieval_eval_skipped`.
-5. **`heuristic_quality`** — Proxy dimensions (`correct`, `faithful`, …) derived from `must_contain` + citations; summary uses `heuristic_quality_*` keys (not semantic LLM/human labels).
+5. **`heuristic_quality`** — Proxy dimensions (`correct`, `faithful`, …) from `must_contain` + citations; always computed.
+6. **`llm_judge`** (optional, `--enable-llm-judge`) — LLM scores the same five dimensions semantically vs gold reference answer; per-row `llm_judge`, `llm_judge_score`, `llm_judge_reason`.
 
 Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X-Request-Id`, `X-Session-Id`). Body: `stream: false`, `expand_on_not_found: false`, `include_follow_up_questions: false`.
 
@@ -186,8 +188,25 @@ Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X
 | `--report-json` | off | Per-row JSON array |
 | `--baseline-json` | off | Fail if metrics drop below pinned summary by `--baseline-tolerance` |
 | `--baseline-tolerance` | `0.05` | Allowed drop for higher-is-better metrics |
+| `--enable-llm-judge` | off | LLM semantic answer scoring (same script/run) |
+| `--llm-judge-base-url` | `LLM_JUDGE_URL` / `INFERENCE_URL` / `CHAT_BASE_URL` | Chat API for judge |
+| `--llm-judge-model` | `LLM_JUDGE_MODEL` / `CHAT_MODEL` | Judge model name |
+| `--llm-judge-concurrency` | `10` | Max concurrent judge requests |
 
 By default only **stdout** (JSON summary). Reports under `data_<env>/report/` are gitignored; pass `--summary-json` / `--report-json` to persist locally.
+
+### LLM-as-judge example
+
+```bash
+python -m app.eval.run_eval \
+  --gold data_dev/gold_dataset/easy_single_hop.jsonl \
+  --enable-llm-judge \
+  --llm-judge-concurrency 10 \
+  --limit 20 \
+  --summary-json data_dev/report/rag_eval_summary.json
+```
+
+Heuristic metrics are always computed; LLM judge adds `llm_judge_*` summary keys when enabled. Start with `--limit` — full corpus = one LLM call per row.
 
 ### `run_eval` examples
 
@@ -200,7 +219,7 @@ python -m app.eval.run_eval \
   --summary-json data_dev/report/rag_eval_paraphrase_summary.json
 ```
 
-Summary includes `run_meta`, `mrr_*`, `recall_at_*`, `latency_ms_*`, `must_contain_*`, `must_contain_pass_rate`, `heuristic_quality_*`, `errors_sample`.
+Summary includes `run_meta`, `mrr_*`, `recall_at_*`, `latency_ms_*`, `must_contain_*`, `heuristic_quality_*`, `llm_judge_*` (when enabled), `errors_sample`.
 
 ---
 
@@ -226,13 +245,14 @@ After re-chunk / re-ingest, **regenerate gold** or retrieval metrics will miss.
 | `recall_at_5_*` | Gold in top-5 |
 | `must_contain_pass` / `must_contain_scored_rows` | Substring checks |
 | `must_contain_pass_rate` | Fraction of scored rows passing all fragments |
-| `heuristic_quality_score_mean` | Proxy answer quality (not LLM judge) |
+| `heuristic_quality_score_mean` | Proxy answer quality (always) |
+| `llm_judge_score_mean` | LLM semantic quality (with `--enable-llm-judge`) |
 | `latency_ms_p50` / `p95` / `p99` | Latency |
 | `rag_calls_failed` | HTTP errors (should be 0) |
 
 ### `rag_eval_report.json`
 
-Per-row debug: ranks, @k hits, `heuristic_quality`, answer preview, errors.
+Per-row debug: ranks, @k hits, `heuristic_quality`, `llm_judge`, `llm_judge_reason`, answer preview, errors.
 
 ---
 
@@ -263,6 +283,8 @@ Per-row debug: ranks, @k hits, `heuristic_quality`, answer preview, errors.
 |----------|---------|
 | `RAG_BASE_URL` | `run_eval` default `--rag-base-url` |
 | `RAG_COLLECTION_BASE` | `run_eval` default `--collection-base` |
+| `LLM_JUDGE_URL` / `INFERENCE_URL` / `CHAT_BASE_URL` | `run_eval --enable-llm-judge` |
+| `LLM_JUDGE_MODEL` / `CHAT_MODEL` | Judge model name |
 | `CHAT_BASE_URL` / `INFERENCE_URL` | `gold_dataset --enable-must-contain-llm` |
 | `QDRANT_URL` / `COLLECTION_NAME` / `ENV` | **layer-rag-ingest-v1** upsert |
 

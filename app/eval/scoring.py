@@ -12,6 +12,12 @@ _UUID_RE = re.compile(
 )
 
 HEURISTIC_QUALITY_KEYS = ("correct", "faithful", "complete", "precise", "cited")
+LLM_JUDGE_KEYS = HEURISTIC_QUALITY_KEYS
+
+
+def quality_score_from_dims(dims: dict[str, bool]) -> float:
+    vals = [1.0 if bool(dims.get(k)) else 0.0 for k in HEURISTIC_QUALITY_KEYS]
+    return (sum(vals) / len(vals)) if vals else 0.0
 
 
 def parse_recall_ks(raw: str) -> list[int]:
@@ -249,10 +255,9 @@ def heuristic_quality(
         "precise": precise,
         "cited": cited,
     }
-    dim_vals = [1.0 if v else 0.0 for v in dims.values()]
     return {
         "heuristic_quality": dims,
-        "heuristic_quality_score": (sum(dim_vals) / len(dim_vals)) if dim_vals else 0.0,
+        "heuristic_quality_score": quality_score_from_dims(dims),
     }
 
 
@@ -346,6 +351,29 @@ def summarize(
             out[f"heuristic_quality_{k}_pass"] = 0
             out[f"heuristic_quality_{k}_rate"] = 0.0
         out["heuristic_quality_score_mean"] = 0.0
+
+    lj_rows = [
+        r
+        for r in results
+        if r.get("ok") and isinstance(r.get("llm_judge"), dict) and not r.get("llm_judge_error")
+    ]
+    nl = len(lj_rows)
+    out["llm_judge_scored_rows"] = nl
+    out["llm_judge_failed_rows"] = sum(1 for r in results if r.get("llm_judge_error"))
+    if nl > 0:
+        for k in LLM_JUDGE_KEYS:
+            out[f"llm_judge_{k}_pass"] = sum(
+                1 for r in lj_rows if bool((r.get("llm_judge") or {}).get(k))
+            )
+            out[f"llm_judge_{k}_rate"] = out[f"llm_judge_{k}_pass"] / nl
+        out["llm_judge_score_mean"] = (
+            sum(float(r.get("llm_judge_score") or 0.0) for r in lj_rows) / nl
+        )
+    else:
+        for k in LLM_JUDGE_KEYS:
+            out[f"llm_judge_{k}_pass"] = 0
+            out[f"llm_judge_{k}_rate"] = 0.0
+        out["llm_judge_score_mean"] = 0.0
 
     scored = [r for r in results if r.get("ok") and r.get("retrieval_scored")]
     ns = len(scored)

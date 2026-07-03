@@ -19,7 +19,7 @@ cp .env.example .env   # set RAG_BASE_URL and RAG_COLLECTION_BASE
 ```
 app/
   core/           config.py, paths.py
-  eval/           gold_dataset.py, run_eval.py, scoring.py, baseline.py, metadata.py
+  eval/           gold_dataset.py, run_eval.py, scoring.py, baseline.py, metadata.py, llm_judge.py
   http/           rag.py, inference.py
 data_<env>/
   gold_dataset/   generated + hand-authored JSONL (gitignored; regenerate locally)
@@ -35,7 +35,8 @@ tests/            unit tests + fixtures (no live RAG)
 | Layer | Module | Signals |
 |-------|--------|---------|
 | **Retrieval** | `app.eval.run_eval` | MRR, Recall@k, Precision@k, NDCG@k, F1@k from `retrieval_hits` |
-| **Answer** | `app.eval.run_eval` | `must_contain`, citation `source`, **`heuristic_quality_*`** (proxy, not LLM judge) |
+| **Answer (heuristic)** | `app.eval.run_eval` | `must_contain`, citation `source`, `heuristic_quality_*` (fast proxy) |
+| **Answer (LLM judge)** | `app.eval.run_eval --enable-llm-judge` | `llm_judge_*` semantic scores (same run) |
 | **Latency** | `app.eval.run_eval` | p50 / p95 / p99 |
 
 ## Quick start (dev)
@@ -46,9 +47,18 @@ python -m app.eval.gold_dataset \
   --skip-consolidated-output \
   --split-output-dir data_dev/gold_dataset
 
-# 2. Eval + reports
+# 2. Eval + reports (heuristic only)
 python -m app.eval.run_eval \
   --gold data_dev/gold_dataset/easy_single_hop.jsonl \
+  --summary-json data_dev/report/rag_eval_summary.json \
+  --report-json data_dev/report/rag_eval_report.json
+
+# 2b. Same run with LLM-as-judge (requires LLM_JUDGE_URL or INFERENCE_URL in .env)
+python -m app.eval.run_eval \
+  --gold data_dev/gold_dataset/easy_single_hop.jsonl \
+  --enable-llm-judge \
+  --llm-judge-concurrency 10 \
+  --limit 20 \
   --summary-json data_dev/report/rag_eval_summary.json \
   --report-json data_dev/report/rag_eval_report.json
 
@@ -68,7 +78,9 @@ Full workflow: [docs/eval.md](docs/eval.md).
 |----------|----------|---------|
 | `RAG_BASE_URL` | **Yes** (for eval) | RAG gateway (no `/v1` suffix) |
 | `RAG_COLLECTION_BASE` | **Yes** (for eval) | `collection_base` in API body |
-| `CHAT_BASE_URL` / `INFERENCE_URL` | Only with `--enable-must-contain-llm` | Gold generator LLM extraction |
+| `LLM_JUDGE_URL` / `INFERENCE_URL` / `CHAT_BASE_URL` | With `--enable-llm-judge` | Chat API for semantic judge |
+| `LLM_JUDGE_MODEL` / `CHAT_MODEL` | Optional | Judge model (default Qwen2.5-7B-Instruct) |
+| `CHAT_BASE_URL` / `INFERENCE_URL` | With `--enable-must-contain-llm` | Gold generator LLM extraction |
 
 ## Development
 

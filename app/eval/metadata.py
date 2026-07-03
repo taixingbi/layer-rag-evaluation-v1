@@ -38,8 +38,12 @@ def build_run_metadata(
     recall_ks: list[int],
     concurrency: int,
     skip_retrieval_hits: bool,
+    enable_llm_judge: bool = False,
+    llm_judge_concurrency: int | None = None,
+    llm_judge_model: str | None = None,
+    llm_judge_base_url: str | None = None,
 ) -> dict[str, Any]:
-    return {
+    meta: dict[str, Any] = {
         "eval_package_version": package_version(),
         "git_sha": _git_sha(),
         "timestamp_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -52,3 +56,11 @@ def build_run_metadata(
         "skip_retrieval_hits": skip_retrieval_hits,
         "gold_paths": [str(p) for p in gold_paths],
     }
+    if enable_llm_judge:
+        meta["enable_llm_judge"] = True
+        meta["llm_judge_concurrency"] = llm_judge_concurrency
+        meta["llm_judge_model"] = llm_judge_model
+        meta["llm_judge_base_url"] = llm_judge_base_url
+    else:
+        meta["enable_llm_judge"] = False
+    return meta
