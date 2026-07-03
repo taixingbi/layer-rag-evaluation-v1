@@ -15,7 +15,7 @@ End-to-end workflow and CLI reference: ingest KB → generate gold JSONL → sco
 | Layer | Module | Signals |
 |-------|--------|---------|
 | **Retrieval** | `app.eval.run_eval` | Rank, RR, MRR, Recall@k / Precision@k / NDCG@k / F1@k from `retrieval_hits` |
-| **Answer** | `app.eval.run_eval` | `must_contain`, citation `source` match, heuristic `quality_dimensions` |
+| **Answer** | `app.eval.run_eval` | `must_contain`, citation `source`, **`heuristic_quality_*`** (proxy rules, not LLM judge) |
 | **Latency** | `app.eval.run_eval` | `latency_ms` per row; p50 / p95 / p99 in summary |
 
 ---
@@ -34,7 +34,7 @@ End-to-end workflow and CLI reference: ingest KB → generate gold JSONL → sco
 1. **Ingested KB** in Qdrant — [layer-rag-ingest-v1](../../layer-rag-ingest-v1): `./scripts/data1.sh dev` ([data1.md](../../layer-rag-ingest-v1/docs/data1.md)).
 2. **Synthetic questions** on points (`payload.synthetic_questions` non-empty). Without them, gold generation writes **0 rows** unless `--include-empty-questions`.
 3. **RAG gateway** reachable (e.g. `http://192.168.86.179:30183`).
-4. Optional `.env` in this repo: `RAG_BASE_URL`, `RAG_COLLECTION_BASE` (see [README](../README.md)).
+4. **`.env`** with **`RAG_BASE_URL`** and **`RAG_COLLECTION_BASE`** (required; copy from `.env.example`).
 
 ---
 
@@ -109,7 +109,7 @@ python -m app.eval.run_eval \
 
 ### Behavior
 
-- Scans `--data-roots` (default: sibling ingest `data_dev`, `data_qa`, `data_prod`).
+- Scans `--data-roots` (default: sibling ingest **`data_dev` only**; pass explicit roots for qa/prod).
 - Finds `**/processed/points_*.json` (override with `--glob`).
 - Reads `payload.synthetic_questions`; uses `payload.text` as `answer` / `text`.
 - Emits one JSONL row per question variant (canonical + optional noisy).
@@ -125,7 +125,7 @@ python -m app.eval.run_eval \
 
 | Flag | Role |
 |------|------|
-| `--data-roots` | Ingest roots (default: sibling `data_dev data_qa data_prod`) |
+| `--data-roots` | Ingest roots (default: sibling `data_dev` only) |
 | `--glob` | Glob under each root (default: `**/processed/points_*.json`) |
 | `--output` | Consolidated JSONL (default: `gold_dataset.jsonl`) |
 | `--skip-consolidated-output` | Omit consolidated file; requires `--split-output-dir` |
@@ -169,7 +169,7 @@ Runs **`POST {rag_base_url}/v1/rag/query`** per gold row, then scores the respon
 2. **`source` (single-hop)** — Gold `source` must appear in a citation (unless `multi` / `negative`).
 3. **`required_sources` (multi-hop)** — Every listed source in citations.
 4. **`retrieval_hits`** — Gold UUID `id` vs `retrieval_hits[].chunk_id` in `retrieve` / `rerank` → rank, RR, MRR, Recall@k, Precision@k, NDCG@k, F1@k (`--recall-at-k`, default `5,10,40`). Non-UUID ids → `retrieval_eval_skipped`.
-5. **`quality_dimensions`** — Heuristic: `correct`, `faithful`, `complete`, `precise`, `cited`; summary `quality_score_mean`.
+5. **`heuristic_quality`** — Proxy dimensions (`correct`, `faithful`, …) derived from `must_contain` + citations; summary uses `heuristic_quality_*` keys (not semantic LLM/human labels).
 
 Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X-Request-Id`, `X-Session-Id`). Body: `stream: false`, `expand_on_not_found: false`, `include_follow_up_questions: false`.
 
@@ -186,9 +186,10 @@ Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X
 | `--skip-retrieval-hits` | off | Skip retrieval metrics |
 | `--recall-at-k` | `5,10,40` | k values for @k metrics |
 | `--report-json` | off | Per-row JSON array |
-| `--summary-json` | off | Summary object (same as stdout) |
+| `--baseline-json` | off | Fail if metrics drop below pinned summary by `--baseline-tolerance` |
+| `--baseline-tolerance` | `0.05` | Allowed drop for higher-is-better metrics |
 
-By default only **stdout** (JSON summary). Use `--summary-json` / `--report-json` under `data_<env>/report/`.
+By default only **stdout** (JSON summary). Reports under `data_<env>/report/` are gitignored; pass `--summary-json` / `--report-json` to persist locally.
 
 ### `run_eval` examples
 
@@ -201,7 +202,7 @@ python -m app.eval.run_eval \
   --summary-json data_dev/report/rag_eval_paraphrase_summary.json
 ```
 
-Summary includes `mrr_*`, `recall_at_*`, `latency_ms_p50`/`p95`/`p99`, `must_contain_*`, `quality_*`, `errors_sample`.
+Summary includes `mrr_*`, `recall_at_*`, `latency_ms_*`, `must_contain_*`, `heuristic_quality_*`, `errors_sample`.
 
 ---
 
@@ -225,13 +226,13 @@ After re-chunk / re-ingest, **regenerate gold** or retrieval metrics will miss.
 | `mrr_retrieve` / `mrr_rerank` | Mean reciprocal rank |
 | `recall_at_5_*` | Gold in top-5 |
 | `must_contain_pass` / `must_contain_total` | Substring checks |
-| `quality_score_mean` | Heuristic answer quality |
+| `heuristic_quality_score_mean` | Proxy answer quality (not LLM judge) |
 | `latency_ms_p50` / `p95` / `p99` | Latency |
 | `rag_calls_failed` | HTTP errors (should be 0) |
 
 ### `rag_eval_report.json`
 
-Per-row debug: ranks, @k hits, `quality_dimensions`, answer preview, errors.
+Per-row debug: ranks, @k hits, `heuristic_quality`, answer preview, errors.
 
 ---
 
@@ -266,6 +267,32 @@ Per-row debug: ranks, @k hits, `quality_dimensions`, answer preview, errors.
 | `QDRANT_URL` / `COLLECTION_NAME` / `ENV` | **layer-rag-ingest-v1** upsert |
 
 Collection: `<COLLECTION_NAME>_<env>` when `ENV=dev|qa|prod`.
+
+---
+
+## Regression baseline
+
+Pin a summary JSON from a known-good run, then gate future evals:
+
+```bash
+python -m app.eval.run_eval \
+  --gold data_dev/gold_dataset/easy_single_hop.jsonl \
+  --baseline-json tests/fixtures/baseline_summary.json \
+  --baseline-tolerance 0.05
+```
+
+Exits non-zero if key metrics (e.g. `recall_at_5_rerank`, `mrr_rerank`) drop more than tolerance below baseline.
+
+---
+
+## Development & CI
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs tests on push/PR to `main` without calling live RAG.
 
 ---
 

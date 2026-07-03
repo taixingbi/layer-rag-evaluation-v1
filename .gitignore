@@ -1,3 +1,6 @@
+# Generated eval reports (regenerate locally or store as CI artifacts)
+data_*/report/
+
 # Virtual environments
 .venv/
 venv/

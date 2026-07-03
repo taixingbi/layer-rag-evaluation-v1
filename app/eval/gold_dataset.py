@@ -12,7 +12,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from app.core.config import DEFAULT_CHAT_MODEL, INFERENCE_BASE_URL as _DEFAULT_INFERENCE_BASE_URL
+from app.core.config import DEFAULT_CHAT_MODEL, get_inference_base_url
 from app.core.paths import INGEST_ROOT
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,8 @@ _DEFAULT_CHAT_MODEL = DEFAULT_CHAT_MODEL
 
 
 def _default_data_roots() -> list[str]:
-    """Points files live under layer-rag-ingest-v1; gold JSONL under this repo."""
-    return [
-        str(_INGEST_ROOT / "data_dev"),
-        str(_INGEST_ROOT / "data_qa"),
-        str(_INGEST_ROOT / "data_prod"),
-    ]
+    """Default: dev ingest only. Pass ``--data-roots`` explicitly for qa/prod."""
+    return [str(_INGEST_ROOT / "data_dev")]
 
 
 def _iter_points_files(data_roots: list[Path], pattern: str) -> list[tuple[str, Path]]:
@@ -392,7 +388,7 @@ def parse_args() -> argparse.Namespace:
         "--data-roots",
         nargs="+",
         default=_default_data_roots(),
-        help="Base data roots to scan (default: layer-rag-ingest-v1/data_{dev,qa,prod}).",
+        help="Base data roots to scan (default: sibling ingest data_dev only).",
     )
     parser.add_argument(
         "--glob",
@@ -437,8 +433,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--chat-base-url",
-        default=(os.getenv("CHAT_BASE_URL") or _DEFAULT_INFERENCE_BASE_URL).strip(),
-        help="Chat base URL for must_contain LLM extraction.",
+        default=(os.getenv("CHAT_BASE_URL") or os.getenv("INFERENCE_URL") or "").strip(),
+        help="Chat base URL for must_contain LLM extraction (required with --enable-must-contain-llm).",
     )
     parser.add_argument(
         "--chat-model",
@@ -509,10 +505,16 @@ def main() -> None:
         all_rows.extend(rows)
 
     if args.enable_must_contain_llm:
+        chat_url = (args.chat_base_url or "").strip().rstrip("/")
+        if not chat_url:
+            try:
+                chat_url = get_inference_base_url(required=True)
+            except ValueError as exc:
+                raise SystemExit(str(exc)) from exc
         asyncio.run(
             _enrich_rows_must_contain_llm(
                 all_rows,
-                base_url=args.chat_base_url,
+                base_url=chat_url,
                 model=args.chat_model,
                 api_key=(args.chat_api_key or None),
                 concurrency=max(1, int(args.llm_concurrency)),

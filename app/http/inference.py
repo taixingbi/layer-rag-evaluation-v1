@@ -7,7 +7,11 @@ from typing import Any
 
 import httpx
 
-from app.core.config import DEFAULT_CHAT_MODEL, INFERENCE_BASE_URL
+from app.core.config import DEFAULT_CHAT_MODEL, get_inference_base_url
+
+
+def _default_inference_base_url() -> str:
+    return get_inference_base_url(required=False)
 
 
 def normalize_chat_base_url(url: str) -> str:
@@ -51,10 +55,19 @@ def _build_payload(
     return payload
 
 
+def _resolve_base_url(base_url: str | None) -> str:
+    url = (base_url or _default_inference_base_url()).strip().rstrip("/")
+    if not url:
+        raise ValueError(
+            "Chat base_url is required. Pass base_url= or set CHAT_BASE_URL / INFERENCE_URL in .env."
+        )
+    return url
+
+
 async def async_chat_completions(
     *,
     messages: list[dict[str, Any]],
-    base_url: str = INFERENCE_BASE_URL,
+    base_url: str | None = None,
     model: str = DEFAULT_CHAT_MODEL,
     max_tokens: int | None = 50,
     temperature: float | None = None,
@@ -65,7 +78,8 @@ async def async_chat_completions(
     response_format: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Async POST /v1/chat/completions."""
-    url = f"{normalize_chat_base_url(base_url)}/v1/chat/completions"
+    resolved = _resolve_base_url(base_url)
+    url = f"{normalize_chat_base_url(resolved)}/v1/chat/completions"
     headers = _build_headers(api_key=api_key, extra_headers=extra_headers)
     payload = _build_payload(
         model=model,
@@ -90,7 +104,7 @@ async def async_chat_completions(
 def chat_completions(
     *,
     messages: list[dict[str, Any]],
-    base_url: str = INFERENCE_BASE_URL,
+    base_url: str | None = None,
     model: str = DEFAULT_CHAT_MODEL,
     max_tokens: int | None = 50,
     temperature: float | None = None,
@@ -103,10 +117,11 @@ def chat_completions(
     """
     POST /v1/chat/completions.
 
-    ``base_url`` is the API root (default: ``INFERENCE_BASE_URL``), not including ``/v1``.
+    ``base_url`` is the API root (from argument or CHAT_BASE_URL / INFERENCE_URL), not including ``/v1``.
     """
+    resolved = _resolve_base_url(base_url)
     if client is not None:
-        url = f"{normalize_chat_base_url(base_url)}/v1/chat/completions"
+        url = f"{normalize_chat_base_url(resolved)}/v1/chat/completions"
         headers = _build_headers(api_key=api_key, extra_headers=extra_headers)
         payload = _build_payload(
             model=model,
@@ -144,7 +159,7 @@ def chat_completions(
 async def async_chat_completion_text(
     *,
     user_content: str,
-    base_url: str = INFERENCE_BASE_URL,
+    base_url: str | None = None,
     model: str = DEFAULT_CHAT_MODEL,
     system_content: str | None = None,
     max_tokens: int | None = 50,
@@ -171,7 +186,7 @@ async def async_chat_completion_text(
 def chat_completion_text(
     *,
     user_content: str,
-    base_url: str = INFERENCE_BASE_URL,
+    base_url: str | None = None,
     model: str = DEFAULT_CHAT_MODEL,
     system_content: str | None = None,
     max_tokens: int | None = 50,

@@ -1,0 +1,8 @@
+{
+  "rows": 10,
+  "rag_calls_ok": 10,
+  "rag_calls_failed": 0,
+  "mrr_rerank": 0.5,
+  "recall_at_5_rerank": 0.5,
+  "heuristic_quality_score_mean": 0.4
+}
