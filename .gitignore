@@ -36,5 +36,5 @@ htmlcov/
 *.swp
 *~
 
-# Atomic write temp files from rag_query / metric
+# Atomic write temp files from CLI modules
 *.tmp

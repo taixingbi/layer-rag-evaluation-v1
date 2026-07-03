@@ -1,96 +1,97 @@
 # Layer RAG evaluation
 
-Batch-evaluate a gold Q&A JSON against a local RAG server: fill `inference-output` via `POST /v1/rag/query`, then attach per-row metrics (LLM-as-judge when configured, or heuristics only).
+Build gold JSONL from ingested Qdrant points and batch-score the live RAG gateway (`POST /v1/rag/query`): retrieval rank, `must_contain`, citation match, answer-quality heuristics, and latency.
 
-## Prerequisites
-
-- Python **3.11**
-- A running RAG API exposing **`/v1/rag/query`** (see `tmp.md` for request/response shape)
-- Optional: an OpenAI-compatible **`/v1/chat/completions`** endpoint for the metric judge (set in `.env`)
-
-## Setup
+## Installation
 
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -e .
+cp .env.example .env   # optional; edit RAG_BASE_URL, etc.
 ```
 
-Copy or create a `.env` in the repo root if you use the LLM judge (see **Configuration**).
+`.env` at the repo root is loaded on `import app` (via `app.core.config`).
 
-## Run
+## Repository layout
 
-**End-to-end** (RAG fill + metrics in one step; writes RAG results then merges metrics into the same `-o` file):
-
-```bash
-python3 main.py -i dataset/dataset-gold-test-1.0.0.json -o result/dataset-gold-test-1.0.0.json --rag-max-concurrency 1 --judge-max-concurrency 32
+```
+app/
+  core/           config.py, paths.py (REPO_ROOT, INGEST_ROOT)
+  eval/           gold_dataset.py, run_eval.py
+  http/           rag.py (shared RAG client), inference.py (chat API for gold generator)
+data_<env>/
+  gold_dataset/   easy_single_hop.jsonl, paraphrase.jsonl, hand-authored splits
+  report/         rag_eval_summary.json, rag_eval_report.json
+docs/
+  eval.md          workflow + CLI reference
 ```
 
-Omit `-i` / `-o` to use the defaults under `dataset/` and `result/`.
+Points input lives in sibling **[layer-rag-ingest-v1](../layer-rag-ingest-v1)** (`data_<env>/data1/processed/points_*.json`). Gold JSONL and reports stay in this repo under `data_<env>/`.
 
-### Useful flags
+## What gets evaluated
 
-| Flag | Meaning |
-|------|--------|
-| `--base-url` | RAG server (default: `http://127.0.0.1:8000`) |
-| `-c` / `--collection` | `collection_base` sent to RAG (default: `taixing_knowledge`) |
-| `-k`, `--k-max` | Retrieval params (defaults: `5`, `40`) |
-| `--timeout` | Per-request HTTP timeout in seconds (default: `300`) |
-| `--rag-max-concurrency` | Max in-flight `/v1/rag/query` requests from this client (default: `20`) |
-| `--judge-max-concurrency` | Max concurrent LLM judge requests (default: same as `--rag-max-concurrency`) |
-| `--max-attempts`, `--retry-backoff` | Retries on transient RAG errors |
-| `--heuristic-only` | Metrics step skips the LLM judge (string/embed heuristics only) |
-| `--judge-max-attempts`, `--judge-retry-backoff` | Judge HTTP retries (defaults also from env) |
+| Layer | Module | Signals |
+|-------|--------|---------|
+| **Retrieval** | `app.eval.run_eval` | Rank, RR, MRR, Recall@k / Precision@k / NDCG@k / F1@k from `retrieval_hits` |
+| **Answer** | `app.eval.run_eval` | `must_contain`, citation `source` match, heuristic `quality_dimensions` |
+| **Latency** | `app.eval.run_eval` | `latency_ms` per row; p50 / p95 / p99 in summary |
 
-`--rag-max-concurrency` only limits how many concurrent `/v1/rag/query` requests the RAG step sends; total time still depends on the server. Progress lines print as each slot starts work. (`rag_query.py` / `metric.py` still use `--max-concurrency` for their respective HTTP clients.)
+## Quick start (dev)
 
-**Stop the run:** use **Ctrl+C**. Avoid **Ctrl+Z** (suspends the job; you may see `zsh: suspended`).
+Run from this repo root after ingest + Qdrant upsert (see [docs/eval.md](docs/eval.md)).
 
-### Standalone steps
-
-- RAG only: `python3 rag_query.py -h`
-- Metrics only (e.g. on an existing result file): `python3 metric.py -h`
-
-## Configuration (`.env`)
-
-Loaded automatically for the **metric** step. If `LLM_JUDGE_URL` and `INFERENCE_URL` are both unset or empty, metrics use heuristics only. Use `--heuristic-only` to skip the judge even when a judge URL is configured.
-
-| Variable | Purpose |
-|----------|--------|
-| `LLM_JUDGE_URL` or `INFERENCE_URL` | Base URL for OpenAI-compatible chat completions |
-| `LLM_JUDGE_MODEL` or `INFERENCE_MODEL` | Model name for the judge |
-| `LLM_JUDGE_TIMEOUT` | Request timeout (default: `120`) |
-| `LLM_JUDGE_MAX_TOKENS` | `max_tokens` (default: `400`) |
-| `LLM_JUDGE_MAX_ATTEMPTS` | Judge retries (default: `3`) |
-| `LLM_JUDGE_RETRY_BACKOFF` | Base backoff seconds for judge (default: `1.0`) |
-
-## Dataset format
-
-Gold file: JSON array of objects with at least:
-
-- `input` — question
-- `output` — reference answer
-- `inference-output` — filled by RAG (often empty in the gold file)
-
-After `main.py`, each row includes RAG fields (e.g. answer, citations) and a `metrics` object when the metric step succeeds.
-
-## JSONL gold + retrieval eval (`rag_gold_eval/`)
-
-Build gold JSONL from ingested `points_*.json` (in sibling **layer-rag-ingest-v1**) and score retrieval + `must_contain` against `/v1/rag/query`:
-
-- [`docs/eval.md`](docs/eval.md) — end-to-end workflow
-- [`docs/gold-dataset.md`](docs/gold-dataset.md) — CLI reference
+**1. Generate gold JSONL**
 
 ```bash
-python3 rag_gold_eval/generate_gold_dataset.py \
+python -m app.eval.gold_dataset \
+  --data-roots ../layer-rag-ingest-v1/data_dev \
   --skip-consolidated-output \
   --split-output-dir data_dev/gold_dataset
+```
 
-python3 rag_gold_eval/run_eval.py \
+**2. Smoke eval (10 rows)**
+
+```bash
+python -m app.eval.run_eval \
+  --gold data_dev/gold_dataset/easy_single_hop.jsonl \
+  --limit 10
+```
+
+**3. Full eval + reports**
+
+```bash
+python -m app.eval.run_eval \
   --gold data_dev/gold_dataset/ \
   --report-json data_dev/report/rag_eval_report.json \
   --summary-json data_dev/report/rag_eval_summary.json
 ```
 
-Gold artifacts: `data_dev/gold_dataset/`, `data_prod/gold_dataset/`, reports under `data_<env>/report/`.
+By default, `--data-roots` scans `../layer-rag-ingest-v1/data_dev`, `data_qa`, and `data_prod`. Pass explicit roots (e.g. only `data_dev`) to avoid mixing envs or warnings for missing folders.
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `python -m app.eval.gold_dataset` | Build / refresh gold JSONL from `points_*.json` |
+| `python -m app.eval.run_eval` | Call RAG per gold row and aggregate scores |
+
+Full documentation: [docs/eval.md](docs/eval.md).
+
+## Configuration (`.env`)
+
+| Variable | Used by |
+|----------|---------|
+| `RAG_BASE_URL` | Default `--rag-base-url` for `run_eval` (e.g. `http://192.168.86.179:30183`) |
+| `RAG_COLLECTION_BASE` | Default `--collection-base` (e.g. `taixing_knowledge`) |
+| `CHAT_BASE_URL` / `INFERENCE_URL` | `gold_dataset --enable-must-contain-llm` |
+| `CHAT_MODEL` / `INFERENCE_MODEL` | Chat model for must_contain extraction |
+| `CHAT_API_KEY` | Optional bearer token |
+
+Upsert and Qdrant settings (`QDRANT_URL`, `COLLECTION_NAME`, `ENV`) belong in **layer-rag-ingest-v1** (e.g. `.env.dev`).
+
+## Related repos
+
+- [layer-rag-ingest-v1](../layer-rag-ingest-v1) — chunk, embed, synthetic questions, Qdrant upsert
+- [layer-rag-query-v1](../layer-rag-query-v1) — RAG HTTP API, `retrieval_hits` contract ([eval.md](../layer-rag-query-v1/docs/eval.md))

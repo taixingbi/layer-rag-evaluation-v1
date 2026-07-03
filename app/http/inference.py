@@ -3,23 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-import os
-from pathlib import Path
 from typing import Any
 
 import httpx
-from dotenv import load_dotenv
 
-_ROOT = Path(__file__).resolve().parent
-load_dotenv(_ROOT / ".env")
-load_dotenv()
-
-# Default inference service root (no ``/v1`` suffix). Set ``INFERENCE_BASE_URL`` in ``.env`` or pass ``base_url=``.
-_INFERENCE_FALLBACK = "http://192.168.86.179:30180"
-INFERENCE_BASE_URL = (
-    (os.getenv("INFERENCE_BASE_URL") or _INFERENCE_FALLBACK).strip().rstrip("/")
-)
-DEFAULT_CHAT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+from app.core.config import DEFAULT_CHAT_MODEL, INFERENCE_BASE_URL
 
 
 def normalize_chat_base_url(url: str) -> str:

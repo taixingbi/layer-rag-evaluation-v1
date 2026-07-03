@@ -1,31 +1,40 @@
-# RAG evaluation runbook
+# RAG evaluation
 
-End-to-end workflow to build a gold dataset from ingested points, score the live RAG API, and write reports under `data_<env>/report/`.
+End-to-end workflow and CLI reference: ingest KB → generate gold JSONL → score the live RAG API → write reports under `data_<env>/report/`.
 
-**Scripts:** `rag_gold_eval/generate_gold_dataset.py`, `rag_gold_eval/run_eval.py`  
-**Deep reference:** [gold-dataset.md](gold-dataset.md) (CLI flags, schema, scoring rules)  
-**RAG API contract:** [layer-rag-query-v1/docs/eval.md](../../layer-rag-query-v1/docs/eval.md)
+**Scripts:** `python -m app.eval.gold_dataset`, `python -m app.eval.run_eval`  
+**Code:** `app/eval/gold_dataset.py`, `app/eval/run_eval.py`  
+**Points input:** [layer-rag-ingest-v1](../../layer-rag-ingest-v1) `data_<env>/data1/processed/points_*.json`  
+**Outputs:** `data_<env>/gold_dataset/` and `data_<env>/report/` in this repo  
+**RAG HTTP contract:** [layer-rag-query-v1/docs/eval.md](../../layer-rag-query-v1/docs/eval.md)
 
 ---
 
 ## What this repo evaluates
 
-| Layer | Tool | Signals |
-|-------|------|---------|
-| **Retrieval** | `run_eval.py` | Rank, RR, MRR, Recall@k / Precision@k / NDCG@k / F1@k from `retrieval_hits` |
-| **Answer** | `run_eval.py` | `must_contain`, citation `source` match, heuristic `quality_dimensions` |
-| **Latency** | `run_eval.py` | `latency_ms` per row; p50/p95/p99 in summary |
+| Layer | Module | Signals |
+|-------|--------|---------|
+| **Retrieval** | `app.eval.run_eval` | Rank, RR, MRR, Recall@k / Precision@k / NDCG@k / F1@k from `retrieval_hits` |
+| **Answer** | `app.eval.run_eval` | `must_contain`, citation `source` match, heuristic `quality_dimensions` |
+| **Latency** | `app.eval.run_eval` | `latency_ms` per row; p50 / p95 / p99 in summary |
 
-For LLM-as-judge end-to-end metrics, use [layer-rag-evaluation-v1](../../layer-rag-evaluation-v1).
+---
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `python -m app.eval.gold_dataset` | Build gold JSONL from ingest points |
+| `python -m app.eval.run_eval` | `POST /v1/rag/query` per row; score retrieval + answers |
 
 ---
 
 ## Prerequisites
 
-1. **Ingested KB** in Qdrant for the target env (`layer-rag-ingest-v1`: `./scripts/data1.sh dev` — see [data1.md](../../layer-rag-ingest-v1/docs/data1.md)).
+1. **Ingested KB** in Qdrant — [layer-rag-ingest-v1](../../layer-rag-ingest-v1): `./scripts/data1.sh dev` ([data1.md](../../layer-rag-ingest-v1/docs/data1.md)).
 2. **Synthetic questions** on points (`payload.synthetic_questions` non-empty). Without them, gold generation writes **0 rows** unless `--include-empty-questions`.
-3. **RAG gateway** reachable (e.g. k3s NodePort `http://192.168.86.179:30183`, not necessarily localhost).
-4. Env file (optional): `.env.dev` with `RAG_BASE_URL`, `RAG_COLLECTION_BASE`, `QDRANT_URL`, etc.
+3. **RAG gateway** reachable (e.g. `http://192.168.86.179:30183`).
+4. Optional `.env` in this repo: `RAG_BASE_URL`, `RAG_COLLECTION_BASE` (see [README](../README.md)).
 
 ---
 
@@ -53,32 +62,32 @@ python3 app/upsert_qdrant.py \
   --pattern "points_*.json"
 ```
 
-Required after synthetic-question enrichment so vectors and payload match what retrieval uses.
+Required after synthetic-question enrichment so vectors and payload match retrieval.
 
 ### 3. Generate gold JSONL
 
 ```bash
-python3 rag_gold_eval/generate_gold_dataset.py \
-  --data-roots data_dev \
+cd ../layer-rag-evaluation-v1
+python -m app.eval.gold_dataset \
+  --data-roots ../layer-rag-ingest-v1/data_dev \
   --skip-consolidated-output \
   --split-output-dir data_dev/gold_dataset
 ```
 
-Expect log: `rows_written` equal to your point count (one row per chunk by default), `invalid_single_hop=0`.
+Expect log: `rows_written` ≈ point count, `invalid_single_hop=0`.
 
 **Outputs:**
 
 | File | Contents |
 |------|----------|
-| `data_dev/gold_dataset/easy_single_hop.jsonl` | One row per chunk (canonical question) |
-| `data_dev/gold_dataset/paraphrase.jsonl` | Noisy variants (only if `--enable-noisy-queries`) |
-
-Hand-authored splits (`multi_hop.jsonl`, `negative.jsonl`, etc.) are kept if already present; the generator only overwrites its split files.
+| `easy_single_hop.jsonl` | One row per chunk (canonical synthetic question) |
+| `paraphrase.jsonl` | Noisy variants (only with `--enable-noisy-queries`) |
+| `multi_hop.jsonl`, `nagative.jsonl`, … | Hand-authored; generator does not overwrite |
 
 ### 4. Run eval + write reports
 
 ```bash
-python3 rag_gold_eval/run_eval.py \
+python -m app.eval.run_eval \
   --gold data_dev/gold_dataset/ \
   --rag-base-url http://192.168.86.179:30183 \
   --collection-base taixing_knowledge \
@@ -89,47 +98,148 @@ python3 rag_gold_eval/run_eval.py \
 Smoke test first:
 
 ```bash
-python3 rag_gold_eval/run_eval.py \
+python -m app.eval.run_eval \
   --gold data_dev/gold_dataset/easy_single_hop.jsonl \
   --limit 10
 ```
 
 ---
 
+## Generator (`app.eval.gold_dataset`)
+
+### Behavior
+
+- Scans `--data-roots` (default: sibling ingest `data_dev`, `data_qa`, `data_prod`).
+- Finds `**/processed/points_*.json` (override with `--glob`).
+- Reads `payload.synthetic_questions`; uses `payload.text` as `answer` / `text`.
+- Emits one JSONL row per question variant (canonical + optional noisy).
+- **`must_contain`:** heuristic by default; `--enable-must-contain-llm` uses chat API (`--llm-concurrency`, default **40**).
+
+### Output schema (each JSONL line)
+
+- `env`, `source_file`, `id`, `question`, `answer`, `must_contain`
+- `source`, `doc_type`, `section`, `chunk_id`, `text`
+- `case_type`, `required_sources`, `expected_behavior`, `query_type`, `eval_bucket`
+
+### Generator CLI
+
+| Flag | Role |
+|------|------|
+| `--data-roots` | Ingest roots (default: sibling `data_dev data_qa data_prod`) |
+| `--glob` | Glob under each root (default: `**/processed/points_*.json`) |
+| `--output` | Consolidated JSONL (default: `gold_dataset.jsonl`) |
+| `--skip-consolidated-output` | Omit consolidated file; requires `--split-output-dir` |
+| `--split-output-dir` | Directory for split JSONL files |
+| `--include-empty-questions` | Row with empty question if no synthetic questions |
+| `--no-dedup` | Keep duplicate `(env, id, question)` rows |
+| `--enable-must-contain-llm` | LLM `must_contain` extraction |
+| `--enable-noisy-queries` | Noisy query variants |
+| `--max-paraphrases-per-fact` | Max variants per fact (default `3`) |
+| `--chat-base-url`, `--chat-model`, `--chat-api-key` | Chat API for LLM must_contain |
+| `--llm-concurrency` | Max concurrent LLM calls (default **40**) |
+
+### Generator examples
+
+```bash
+# LLM must_contain + paraphrases
+python -m app.eval.gold_dataset \
+  --data-roots ../layer-rag-ingest-v1/data_dev \
+  --skip-consolidated-output \
+  --split-output-dir data_dev/gold_dataset \
+  --enable-must-contain-llm \
+  --enable-noisy-queries \
+  --max-paraphrases-per-fact 2
+
+# Consolidated + splits
+python -m app.eval.gold_dataset \
+  --data-roots ../layer-rag-ingest-v1/data_dev \
+  --output data_dev/gold_dataset/gold_dataset.jsonl \
+  --split-output-dir data_dev/gold_dataset
+```
+
+---
+
+## RAG evaluation (`app.eval.run_eval`)
+
+Runs **`POST {rag_base_url}/v1/rag/query`** per gold row, then scores the response.
+
+### Scoring rules
+
+1. **`must_contain`** — Each fragment in RAG `answer` (case-insensitive). Empty list skips this axis.
+2. **`source` (single-hop)** — Gold `source` must appear in a citation (unless `multi` / `negative`).
+3. **`required_sources` (multi-hop)** — Every listed source in citations.
+4. **`retrieval_hits`** — Gold UUID `id` vs `retrieval_hits[].chunk_id` in `retrieve` / `rerank` → rank, RR, MRR, Recall@k, Precision@k, NDCG@k, F1@k (`--recall-at-k`, default `5,10,40`). Non-UUID ids → `retrieval_eval_skipped`.
+5. **`quality_dimensions`** — Heuristic: `correct`, `faithful`, `complete`, `precise`, `cited`; summary `quality_score_mean`.
+
+Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X-Request-Id`, `X-Session-Id`). Body: `stream: false`, `expand_on_not_found: false`, `include_follow_up_questions: false`.
+
+### `run_eval` CLI
+
+| Flag | Default | Role |
+|------|---------|------|
+| `--gold` | (required) | JSONL file or directory of `*.jsonl` |
+| `--rag-base-url` | `RAG_BASE_URL` or `http://192.168.86.179:30183` | Gateway base (no `/v1`) |
+| `--collection-base` | `RAG_COLLECTION_BASE` or `taixing_knowledge` | `collection_base` in body |
+| `--k` / `--k-max` | `5` / `40` | Retrieval params |
+| `--concurrency` | `40` | Max concurrent RAG requests |
+| `--limit` | `0` | Max rows (`0` = all) |
+| `--skip-retrieval-hits` | off | Skip retrieval metrics |
+| `--recall-at-k` | `5,10,40` | k values for @k metrics |
+| `--report-json` | off | Per-row JSON array |
+| `--summary-json` | off | Summary object (same as stdout) |
+
+By default only **stdout** (JSON summary). Use `--summary-json` / `--report-json` under `data_<env>/report/`.
+
+### `run_eval` examples
+
+```bash
+python -m app.eval.run_eval --gold data_dev/gold_dataset/
+
+python -m app.eval.run_eval \
+  --gold data_dev/gold_dataset/paraphrase.jsonl \
+  --report-json data_dev/report/rag_eval_paraphrase_report.json \
+  --summary-json data_dev/report/rag_eval_paraphrase_summary.json
+```
+
+Summary includes `mrr_*`, `recall_at_*`, `latency_ms_p50`/`p95`/`p99`, `must_contain_*`, `quality_*`, `errors_sample`.
+
+---
+
 ## Gold row `id` vs `chunk_id`
 
-| Field | Meaning | Used by eval for retrieval? |
-|-------|---------|------------------------------|
-| **`id`** | Qdrant **point UUID** (deterministic UUID5 at ingest; same value upserted to Qdrant) | **Yes** — matched against `retrieval_hits[].chunk_id` |
-| **`chunk_id`** | Ingest ordinal inside document (e.g. `"0007"`) | **No** — informational only |
+| Field | Meaning | Used for retrieval scoring? |
+|-------|---------|-------------------------------|
+| **`id`** | Qdrant point UUID (UUID5 at ingest) | **Yes** — vs `retrieval_hits[].chunk_id` |
+| **`chunk_id`** | Ingest ordinal (e.g. `"0007"`) | **No** |
 
-The RAG API sets `retrieval_hits[].chunk_id` from `hit.id` (Qdrant point id), not from `payload.chunk_id`.
-
-After **re-chunk / re-prepare** (new `document_version` or chunk boundaries), point UUIDs can change. **Regenerate gold** from current `points_*.json` before eval, or retrieval metrics will show misses despite correct content.
+After re-chunk / re-ingest, **regenerate gold** or retrieval metrics will miss.
 
 ---
 
 ## Report files
 
-### `rag_eval_summary.json` (aggregates)
-
-Key fields:
+### `rag_eval_summary.json`
 
 | Field | Meaning |
 |-------|---------|
-| `mrr_retrieve` / `mrr_rerank` | Mean reciprocal rank over all scored rows |
-| `mean_rr_retrieve_when_found` | MRR over rows where gold chunk was found (excludes misses) |
-| `recall_at_5_retrieve` | Fraction of rows with gold in top-5 at retrieve stage |
-| `must_contain_pass` / `must_contain_total` | Answer substring checks |
-| `quality_score_mean` | Heuristic answer quality (5 binary dims) |
-| `latency_ms_p50` / `p95` / `p99` | End-to-end latency |
-| `rag_calls_failed` | HTTP/API errors (should be 0) |
+| `mrr_retrieve` / `mrr_rerank` | Mean reciprocal rank |
+| `recall_at_5_*` | Gold in top-5 |
+| `must_contain_pass` / `must_contain_total` | Substring checks |
+| `quality_score_mean` | Heuristic answer quality |
+| `latency_ms_p50` / `p95` / `p99` | Latency |
+| `rag_calls_failed` | HTTP errors (should be 0) |
 
-### `rag_eval_report.json` (per row)
+### `rag_eval_report.json`
 
-Array of one object per gold row: `question`, `answer_preview`, `must_contain_pass`, `rank_retrieve`, `rank_rerank`, `rr_retrieve`, `hit_retrieve_at_5`, retrieval fields, `quality_dimensions`, errors, etc. Use this to debug individual failures.
+Per-row debug: ranks, @k hits, `quality_dimensions`, answer preview, errors.
 
-Without `--summary-json` / `--report-json`, only the summary JSON is printed to **stdout**.
+---
+
+## Validation checklist
+
+**Generator:** `invalid_single_hop=0`, non-zero `easy_single_hop.jsonl`, spot-check `id`/`question`/`answer` vs points.
+
+**Eval:** `rag_calls_failed=0`, `must_contain_pass` and retrieval metrics meet bar, latency p95 within SLO.
 
 ---
 
@@ -137,12 +247,12 @@ Without `--summary-json` / `--report-json`, only the summary JSON is printed to 
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `rows_written=0` | Points have empty `synthetic_questions` | Run `synthetic_questions.py`, then regenerate gold |
-| Gold written to repo root | Ran generator with **default** flags (no `--split-output-dir`) | Use explicit `--data-roots data_dev --split-output-dir data_dev/gold_dataset` |
-| `rows_written=N` but `env: prod` | Default `--data-roots` includes `data_prod`; dev had no synthetic Q | Pass `--data-roots data_dev` only |
-| Retrieval misses, live curl works | Stale gold `id` after re-ingest | Regenerate gold from current `points_*.json` |
-| `rag_calls_failed` > 0 | Wrong `--rag-base-url` or gateway down | Use cluster NodePort; check `RAG_BASE_URL` |
-| `retrieval_eval_skipped` | Gold `id` is not a UUID (multi-hop synthetic ids) | Expected; those rows skip retrieval metrics |
+| `rows_written=0` | Empty `synthetic_questions` | Run `synthetic_questions.py`, regenerate gold |
+| Skipping `.../data_qa` | Default roots include all envs | `--data-roots ../layer-rag-ingest-v1/data_dev` only |
+| Prod rows on dev run | Default includes `data_prod` | Restrict `--data-roots` |
+| Retrieval misses, curl OK | Stale gold `id` | Regenerate gold from current points |
+| `rag_calls_failed` > 0 | Bad URL or ids in JSON body | Check `RAG_BASE_URL`; use headers for correlation ids |
+| `retrieval_eval_skipped` | Non-UUID gold `id` | Expected for hand-authored multi-hop |
 
 ---
 
@@ -150,28 +260,35 @@ Without `--summary-json` / `--report-json`, only the summary JSON is printed to 
 
 | Variable | Used by |
 |----------|---------|
-| `RAG_BASE_URL` | `run_eval.py` default `--rag-base-url` |
-| `RAG_COLLECTION_BASE` | `run_eval.py` default `--collection-base` |
-| `CHAT_BASE_URL` / `CHAT_MODEL` | `generate_gold_dataset.py` with `--enable-must-contain-llm` |
-| `QDRANT_URL` / `COLLECTION_NAME` | `layer-rag-ingest-v1` `upsert_qdrant.py` |
+| `RAG_BASE_URL` | `run_eval` default `--rag-base-url` |
+| `RAG_COLLECTION_BASE` | `run_eval` default `--collection-base` |
+| `CHAT_BASE_URL` / `INFERENCE_URL` | `gold_dataset --enable-must-contain-llm` |
+| `QDRANT_URL` / `COLLECTION_NAME` / `ENV` | **layer-rag-ingest-v1** upsert |
 
-Collection name resolves to `<COLLECTION_NAME>_<env>` when `ENV=dev|qa|prod`.
+Collection: `<COLLECTION_NAME>_<env>` when `ENV=dev|qa|prod`.
 
 ---
 
-## Suggested regression cadence
+## Regression cadence
 
-1. `layer-rag-ingest-v1`: `./scripts/data1.sh dev` (or upsert only if points unchanged except synthetic Q).
+1. Ingest / upsert ([data1.sh](../../layer-rag-ingest-v1/scripts/data1.sh) or upsert only).
 2. Regenerate gold → `data_dev/gold_dataset/`.
-3. `run_eval.py` with `--report-json` + `--summary-json`.
-4. Compare `mrr_rerank`, `recall_at_5_rerank`, `must_contain_pass` rate, and `latency_ms_p95` across runs.
-5. Pin in notes: ingest manifest / git SHA, `collection_base`, `k`, `k_max`, embed model.
+3. `run_eval` with `--report-json` + `--summary-json`.
+4. Track `mrr_rerank`, `recall_at_5_rerank`, `must_contain_pass`, `latency_ms_p95`.
+5. Pin ingest SHA, `collection_base`, `k`, `k_max`, embed model.
+
+---
+
+## Notes
+
+- `env` = ingest folder with `data_` stripped (`data_dev` → `dev`).
+- Dedup key: `(env, id, question)`.
+- Heuristic `must_contain` cached per `(env, point id)` before paraphrase rows.
 
 ---
 
 ## Related docs
 
-- [gold-dataset.md](gold-dataset.md) — generator + `run_eval.py` CLI and scoring rules
 - [layer-rag-ingest-v1/docs/data1.md](../../layer-rag-ingest-v1/docs/data1.md) — ingest pipeline
-- [layer-rag-ingest-v1/docs/identity-key.md](../../layer-rag-ingest-v1/docs/identity-key.md) — how point UUIDs are derived
-- [layer-rag-query-v1/docs/eval.md](../../layer-rag-query-v1/docs/eval.md) — HTTP eval settings and `retrieval_hits` shape
+- [layer-rag-ingest-v1/docs/identity-key.md](../../layer-rag-ingest-v1/docs/identity-key.md) — point UUID derivation
+- [layer-rag-query-v1/docs/eval.md](../../layer-rag-query-v1/docs/eval.md) — RAG HTTP eval settings

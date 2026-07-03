@@ -84,11 +84,3 @@ curl -sS -X POST http://127.0.0.1:8000/v1/rag/query \
 
 
 
-
-python3 main.py -i dataset/dataset-gold-test-1.0.0.json -o result/dataset-gold-test-1.0.0.json --rag-max-concurrency 1 --judge-max-concurrency 4
-
-python3 main.py -i dataset/dataset-gold-test-1.0.0.json -o result/dataset-gold-test-1.0.0.json --rag-max-concurrency 1 --judge-max-concurrency 8
-
-python3 main.py -i dataset/dataset-gold-test-1.0.0.json -o result/dataset-gold-test-1.0.0.json --rag-max-concurrency 1 --judge-max-concurrency 16
-
-python3 main.py -i dataset/dataset-gold-test-1.0.0.json -o result/dataset-gold-test-1.0.0.json --rag-max-concurrency 1 --judge-max-concurrency 32

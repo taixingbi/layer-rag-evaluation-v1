@@ -1,6 +1,6 @@
 """Gold dataset evaluation against the RAG `/v1/rag/query` API.
 
-Reads JSONL rows (see `docs/gold-dataset.md`), posts each `question`, then scores:
+Reads JSONL rows (see `docs/eval.md`), posts each `question`, then scores:
 - `must_contain`: each fragment must appear as a substring of the model `answer` (case-insensitive).
 - `source` (single-hop): at least one citation `source` equals the gold row `source` when present.
 - `required_sources` (multi-hop): every listed source appears in citation `source` values.
@@ -11,7 +11,7 @@ Reads JSONL rows (see `docs/gold-dataset.md`), posts each `question`, then score
 
 Example:
 
-  python3 rag_gold_eval/run_eval.py \\
+  python3 -m app.eval.run_eval \\
     --gold data_dev/gold_dataset/easy_single_hop.jsonl \\
     --rag-base-url http://192.168.86.179:30183 \\
     --collection-base taixing_knowledge \\
@@ -31,10 +31,13 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from app.core.config import DEFAULT_COLLECTION_BASE, DEFAULT_RAG_BASE_URL, DEFAULT_RAG_CONCURRENCY
+from app.http.rag import rag_query_async
+
 logger = logging.getLogger(__name__)
 
-_DEFAULT_RAG_BASE_URL = "http://192.168.86.179:30183"
-_DEFAULT_COLLECTION_BASE = "taixing_knowledge"
+_DEFAULT_RAG_BASE_URL = DEFAULT_RAG_BASE_URL
+_DEFAULT_COLLECTION_BASE = DEFAULT_COLLECTION_BASE
 
 _UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z",
@@ -347,25 +350,6 @@ def _load_rows(paths: list[Path]) -> list[dict[str, Any]]:
     return rows
 
 
-async def _rag_query(
-    client: Any,
-    *,
-    base_url: str,
-    payload: dict[str, Any],
-    request_id: str,
-    session_id: str,
-) -> dict[str, Any]:
-    url = f"{base_url.rstrip('/')}/v1/rag/query"
-    headers = {
-        "Content-Type": "application/json",
-        "X-Request-Id": request_id,
-        "X-Session-Id": session_id,
-    }
-    r = await client.post(url, json=payload, headers=headers, timeout=120.0)
-    r.raise_for_status()
-    return r.json()
-
-
 async def _evaluate_all(
     rows: list[dict[str, Any]],
     *,
@@ -412,25 +396,20 @@ async def _evaluate_all(
 
             request_id = f"eva-{uuid.uuid4().hex[:12]}"
             session_id = f"eva-ses-{uuid.uuid4().hex[:10]}"
-            payload: dict[str, Any] = {
-                "question": question,
-                "collection_base": collection_base,
-                "k": k,
-                "k_max": k_max,
-                "stream": False,
-                "expand_on_not_found": False,
-                "include_follow_up_questions": False,
-            }
-            if request_retrieval_hits:
-                payload["include_retrieval_hits"] = True
             try:
                 async with sem:
-                    data = await _rag_query(
+                    data = await rag_query_async(
                         client,
-                        base_url=rag_base_url,
-                        payload=payload,
+                        rag_base_url,
+                        question=question,
+                        collection_base=collection_base,
                         request_id=request_id,
                         session_id=session_id,
+                        k=k,
+                        k_max=k_max,
+                        include_retrieval_hits=request_retrieval_hits,
+                        max_attempts=1,
+                        log_prefix="run_eval",
                     )
             except Exception as exc:
                 out["error"] = str(exc)
@@ -631,7 +610,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--concurrency",
         type=int,
-        default=20,
+        default=DEFAULT_RAG_CONCURRENCY,
         help="Max concurrent async RAG requests (default: %(default)s).",
     )
     p.add_argument("--limit", type=int, default=0, help="Max rows to evaluate (0 = all).")

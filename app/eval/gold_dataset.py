@@ -12,11 +12,12 @@ import re
 from pathlib import Path
 from typing import Any
 
+from app.core.config import DEFAULT_CHAT_MODEL, INFERENCE_BASE_URL as _DEFAULT_INFERENCE_BASE_URL
+from app.core.paths import INGEST_ROOT
+
 logger = logging.getLogger(__name__)
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-_INGEST_ROOT = _REPO_ROOT.parent / "layer-rag-ingest-v1"
-_DEFAULT_CHAT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
-_DEFAULT_INFERENCE_BASE_URL = "http://192.168.86.179:30180"
+_INGEST_ROOT = INGEST_ROOT
+_DEFAULT_CHAT_MODEL = DEFAULT_CHAT_MODEL
 
 
 def _default_data_roots() -> list[str]:
@@ -148,13 +149,7 @@ async def _extract_keywords_llm_async(
     client: Any,
 ) -> list[str]:
     # Optional import so non-LLM flow does not require inference deps.
-    try:
-        from client_inference import async_chat_completions, normalize_chat_base_url
-    except ModuleNotFoundError:
-        import sys
-
-        sys.path.append(str(Path(__file__).resolve().parent.parent))
-        from client_inference import async_chat_completions, normalize_chat_base_url
+    from app.http.inference import async_chat_completions, normalize_chat_base_url
 
     system, user = _llm_must_contain_messages(answer)
     data = await async_chat_completions(
