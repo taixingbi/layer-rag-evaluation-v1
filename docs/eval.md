@@ -293,7 +293,20 @@ pytest
 ruff check app tests
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs tests on push/PR to `main` without calling live RAG.
+GitHub Actions (`.github/workflows/ci.yml`) runs unit tests on push/PR to `main` without calling live RAG.
+
+### Repository secrets (live eval workflow)
+
+`.github/workflows/rag-eval.yml` reads:
+
+| Secret | Required | Purpose |
+|--------|----------|---------|
+| `RAG_BASE_URL` | Yes | RAG gateway (no `/v1` suffix) |
+| `RAG_COLLECTION_BASE` | Yes | `collection_base` for eval requests |
+
+Add both under **Settings → Secrets and variables → Actions**. The workflow validates they are set before running.
+
+Scheduled smoke: weekly, one-row fixture (`tests/fixtures/gold_single_row.jsonl`). Full-folder regression with `--baseline-json` remains a local or self-hosted job (gold JSONL is gitignored).
 
 ---
 

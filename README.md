@@ -27,6 +27,7 @@ data_<env>/
 docs/eval.md      workflow + CLI reference
 tests/            unit tests + fixtures (no live RAG)
 .github/workflows/ci.yml
+.github/workflows/rag-eval.yml   live eval (uses repository secrets)
 ```
 
 ## What gets evaluated
@@ -77,6 +78,19 @@ ruff check app tests
 ```
 
 CI runs the same on push/PR to `main`.
+
+## GitHub Actions secrets
+
+For the **RAG eval** workflow (`.github/workflows/rag-eval.yml`), add these **repository secrets**:
+
+| Secret | Example (dev) | Purpose |
+|--------|---------------|---------|
+| `RAG_BASE_URL` | `http://192.168.86.179:30183` | RAG gateway base (no `/v1`) |
+| `RAG_COLLECTION_BASE` | `taixing_knowledge` | `collection_base` in API body |
+
+The runner must reach `RAG_BASE_URL` (private LAN requires a self-hosted runner or VPN-exposed URL).
+
+Manual run: **Actions → RAG eval → Run workflow**. Default gold is `tests/fixtures/gold_single_row.jsonl` (smoke). For full regression, run locally with `data_dev/gold_dataset/` and `--baseline-json tests/fixtures/baseline_summary.json`.
 
 ## Related repos
 

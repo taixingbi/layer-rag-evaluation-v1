@@ -1,0 +1,88 @@
+name: RAG eval
+
+on:
+  workflow_dispatch:
+    inputs:
+      gold:
+        description: "Gold JSONL path (repo-relative)"
+        required: true
+        default: "tests/fixtures/gold_single_row.jsonl"
+      limit:
+        description: "Max rows (0 = all)"
+        required: true
+        default: "0"
+      baseline:
+        description: "Run baseline regression gate"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  schedule:
+    # Weekly smoke eval (Mon 12:00 UTC). Requires runner reachability to RAG_BASE_URL.
+    - cron: "0 12 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rag-eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate repository secrets
+        run: |
+          missing=0
+          if [ -z "${{ secrets.RAG_BASE_URL }}" ]; then
+            echo "::error::Missing repository secret RAG_BASE_URL (Settings → Secrets and variables → Actions)"
+            missing=1
+          fi
+          if [ -z "${{ secrets.RAG_COLLECTION_BASE }}" ]; then
+            echo "::error::Missing repository secret RAG_COLLECTION_BASE"
+            missing=1
+          fi
+          exit "$missing"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Run eval
+        env:
+          RAG_BASE_URL: ${{ secrets.RAG_BASE_URL }}
+          RAG_COLLECTION_BASE: ${{ secrets.RAG_COLLECTION_BASE }}
+        run: |
+          set -euo pipefail
+          gold="${{ github.event.inputs.gold || 'tests/fixtures/gold_single_row.jsonl' }}"
+          limit="${{ github.event.inputs.limit || '0' }}"
+          baseline="${{ github.event.inputs.baseline || 'false' }}"
+          args=(
+            --gold "$gold"
+            --summary-json rag_eval_summary.json
+            --report-json rag_eval_report.json
+            --limit "$limit"
+          )
+          if [ "$baseline" = "true" ]; then
+            args+=(--baseline-json tests/fixtures/baseline_summary.json --baseline-tolerance 0.05)
+          fi
+          python -m app.eval.run_eval "${args[@]}"
+
+      - name: Upload eval reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-eval-${{ github.run_id }}
+          path: |
+            rag_eval_summary.json
+            rag_eval_report.json
+          if-no-files-found: ignore
