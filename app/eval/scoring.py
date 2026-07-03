@@ -272,7 +272,12 @@ def percentile(values: list[float], p: float) -> float:
     return values[lo] * (1.0 - w) + values[hi] * w
 
 
-def summarize(results: list[dict[str, Any]], *, recall_ks: list[int]) -> dict[str, Any]:
+def summarize(
+    results: list[dict[str, Any]],
+    *,
+    recall_ks: list[int],
+    run_meta: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     n = len(results)
     ok = sum(1 for r in results if r.get("ok"))
     must_pass = sum(1 for r in results if r.get("must_contain_pass"))
@@ -298,6 +303,10 @@ def summarize(results: list[dict[str, Any]], *, recall_ks: list[int]) -> dict[st
         "required_sources_pass": req_pass,
         "errors_sample": errors[:5],
     }
+    if must_scored > 0:
+        out["must_contain_pass_rate"] = must_pass / must_scored
+    else:
+        out["must_contain_pass_rate"] = 0.0
     latencies = sorted(
         float(r["latency_ms_total"])
         for r in results
@@ -404,4 +413,6 @@ def summarize(results: list[dict[str, Any]], *, recall_ks: list[int]) -> dict[st
             out[f"f1_at_{kk}_retrieve"] = 0.0
             out[f"f1_at_{kk}_rerank"] = 0.0
 
+    if run_meta is not None:
+        out["run_meta"] = run_meta
     return out

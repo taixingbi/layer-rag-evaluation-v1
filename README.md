@@ -19,13 +19,13 @@ cp .env.example .env   # set RAG_BASE_URL and RAG_COLLECTION_BASE
 ```
 app/
   core/           config.py, paths.py
-  eval/           gold_dataset.py, run_eval.py, scoring.py, baseline.py
+  eval/           gold_dataset.py, run_eval.py, scoring.py, baseline.py, metadata.py
   http/           rag.py, inference.py
 data_<env>/
-  gold_dataset/   generated + hand-authored JSONL
+  gold_dataset/   generated + hand-authored JSONL (gitignored; regenerate locally)
   report/         eval outputs (gitignored; use --summary-json / --report-json)
 docs/eval.md      workflow + CLI reference
-tests/            unit tests (no live RAG)
+tests/            unit tests + fixtures (no live RAG)
 .github/workflows/ci.yml
 ```
 
@@ -73,6 +73,7 @@ Full workflow: [docs/eval.md](docs/eval.md).
 
 ```bash
 pytest
+ruff check app tests
 ```
 
 CI runs the same on push/PR to `main`.

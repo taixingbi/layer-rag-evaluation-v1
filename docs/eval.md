@@ -33,7 +33,7 @@ End-to-end workflow and CLI reference: ingest KB → generate gold JSONL → sco
 
 1. **Ingested KB** in Qdrant — [layer-rag-ingest-v1](../../layer-rag-ingest-v1): `./scripts/data1.sh dev` ([data1.md](../../layer-rag-ingest-v1/docs/data1.md)).
 2. **Synthetic questions** on points (`payload.synthetic_questions` non-empty). Without them, gold generation writes **0 rows** unless `--include-empty-questions`.
-3. **RAG gateway** reachable (e.g. `http://192.168.86.179:30183`).
+3. **RAG gateway** reachable at `RAG_BASE_URL` (see `.env.example`).
 4. **`.env`** with **`RAG_BASE_URL`** and **`RAG_COLLECTION_BASE`** (required; copy from `.env.example`).
 
 ---
@@ -89,8 +89,6 @@ Expect log: `rows_written` ≈ point count, `invalid_single_hop=0`.
 ```bash
 python -m app.eval.run_eval \
   --gold data_dev/gold_dataset/ \
-  --rag-base-url http://192.168.86.179:30183 \
-  --collection-base taixing_knowledge \
   --report-json data_dev/report/rag_eval_report.json \
   --summary-json data_dev/report/rag_eval_summary.json
 ```
@@ -178,8 +176,8 @@ Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X
 | Flag | Default | Role |
 |------|---------|------|
 | `--gold` | (required) | JSONL file or directory of `*.jsonl` |
-| `--rag-base-url` | `RAG_BASE_URL` or `http://192.168.86.179:30183` | Gateway base (no `/v1`) |
-| `--collection-base` | `RAG_COLLECTION_BASE` or `taixing_knowledge` | `collection_base` in body |
+| `--rag-base-url` | `RAG_BASE_URL` (required if unset on CLI) | Gateway base (no `/v1`) |
+| `--collection-base` | `RAG_COLLECTION_BASE` (required if unset on CLI) | `collection_base` in body |
 | `--k` / `--k-max` | `5` / `40` | Retrieval params |
 | `--concurrency` | `40` | Max concurrent RAG requests |
 | `--limit` | `0` | Max rows (`0` = all) |
@@ -202,7 +200,7 @@ python -m app.eval.run_eval \
   --summary-json data_dev/report/rag_eval_paraphrase_summary.json
 ```
 
-Summary includes `mrr_*`, `recall_at_*`, `latency_ms_*`, `must_contain_*`, `heuristic_quality_*`, `errors_sample`.
+Summary includes `run_meta`, `mrr_*`, `recall_at_*`, `latency_ms_*`, `must_contain_*`, `must_contain_pass_rate`, `heuristic_quality_*`, `errors_sample`.
 
 ---
 
@@ -223,9 +221,11 @@ After re-chunk / re-ingest, **regenerate gold** or retrieval metrics will miss.
 
 | Field | Meaning |
 |-------|---------|
+| `run_meta` | Git SHA, package version, k/k_max, collection, gold paths, UTC timestamp |
 | `mrr_retrieve` / `mrr_rerank` | Mean reciprocal rank |
 | `recall_at_5_*` | Gold in top-5 |
-| `must_contain_pass` / `must_contain_total` | Substring checks |
+| `must_contain_pass` / `must_contain_scored_rows` | Substring checks |
+| `must_contain_pass_rate` | Fraction of scored rows passing all fragments |
 | `heuristic_quality_score_mean` | Proxy answer quality (not LLM judge) |
 | `latency_ms_p50` / `p95` / `p99` | Latency |
 | `rag_calls_failed` | HTTP errors (should be 0) |
@@ -290,6 +290,7 @@ Exits non-zero if key metrics (e.g. `recall_at_5_rerank`, `mrr_rerank`) drop mor
 ```bash
 pip install -e ".[dev]"
 pytest
+ruff check app tests
 ```
 
 GitHub Actions (`.github/workflows/ci.yml`) runs tests on push/PR to `main` without calling live RAG.

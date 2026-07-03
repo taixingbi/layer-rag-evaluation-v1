@@ -1,0 +1,1 @@
+{"env": "dev", "id": "08d53b51-7e9f-58db-8863-fc437b7100fe", "question": "Where does Taixing Bi currently work?", "answer": "Q: Where does Taixing Bi currently work?\nA: Saks", "must_contain": ["Saks"], "source": "personal_profile", "case_type": "single_hop", "required_sources": [], "eval_bucket": "easy_single_hop"}

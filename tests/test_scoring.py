@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from app.eval.baseline import compare_summaries
 from app.eval.scoring import (
     gold_chunk_id,
@@ -27,18 +30,23 @@ def test_must_contain_hits_case_insensitive():
     assert missing == ["missing"]
 
 
+FIXTURES = Path(__file__).parent / "fixtures"
+BASELINE_FIXTURE = FIXTURES / "baseline_summary.json"
+GOLD_UUID = "08d53b51-7e9f-58db-8863-fc437b7100fe"
+
+
 def test_gold_chunk_id_requires_uuid():
-    assert gold_chunk_id({"id": "08d53b51-7e9f-58db-8863-fc437b7100fe"}) == "08d53b51-7e9f-58db-8863-fc437b7100fe"
+    assert gold_chunk_id({"id": GOLD_UUID}) == GOLD_UUID
     assert gold_chunk_id({"id": "multi-hop-1"}) is None
 
 
 def test_retrieval_row_fields_finds_rank():
-    row = {"id": "08d53b51-7e9f-58db-8863-fc437b7100fe"}
+    row = {"id": GOLD_UUID}
     data = {
         "retrieval_hits": [
             {"stage": "retrieve", "rank": 2, "chunk_id": "other"},
-            {"stage": "retrieve", "rank": 1, "chunk_id": "08d53b51-7e9f-58db-8863-fc437b7100fe"},
-            {"stage": "rerank", "rank": 1, "chunk_id": "08d53b51-7e9f-58db-8863-fc437b7100fe"},
+            {"stage": "retrieve", "rank": 1, "chunk_id": GOLD_UUID},
+            {"stage": "rerank", "rank": 1, "chunk_id": GOLD_UUID},
         ]
     }
     out = retrieval_row_fields(row, data, request_retrieval_hits=True, recall_ks=[5])
@@ -66,7 +74,13 @@ def test_summarize_heuristic_quality_keys():
             "ok": True,
             "must_contain_pass": True,
             "must_contain_total": 1,
-            "heuristic_quality": {"correct": True, "faithful": False, "complete": True, "precise": False, "cited": False},
+            "heuristic_quality": {
+                "correct": True,
+                "faithful": False,
+                "complete": True,
+                "precise": False,
+                "cited": False,
+            },
             "heuristic_quality_score": 0.4,
             "retrieval_scored": True,
             "rr_retrieve": 1.0,
@@ -89,6 +103,14 @@ def test_summarize_heuristic_quality_keys():
     assert summary["heuristic_quality_scored_rows"] == 1
     assert "heuristic_quality_correct_pass" in summary
     assert summary["mrr_retrieve"] == 1.0
+    assert summary["must_contain_pass_rate"] == 1.0
+
+
+def test_baseline_fixture_loads():
+    baseline = json.loads(BASELINE_FIXTURE.read_text(encoding="utf-8"))
+    assert baseline["rag_calls_failed"] == 0
+    assert "heuristic_quality_score_mean" in baseline
+    assert "description" in baseline
 
 
 def test_baseline_regression_detects_drop():

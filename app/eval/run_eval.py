@@ -10,7 +10,6 @@ import argparse
 import asyncio
 import json
 import logging
-import os
 import sys
 import uuid
 from pathlib import Path
@@ -24,6 +23,7 @@ from app.core.config import (
     get_rag_collection_base,
 )
 from app.eval.baseline import compare_summaries, load_baseline
+from app.eval.metadata import build_run_metadata
 from app.eval.scoring import (
     citation_sources,
     gold_source_hit,
@@ -285,7 +285,17 @@ def main() -> None:
             recall_ks=recall_ks,
         )
     )
-    summary = summarize(results, recall_ks=recall_ks)
+    run_meta = build_run_metadata(
+        rag_base_url=rag_base_url,
+        collection_base=collection_base,
+        k=int(args.k),
+        k_max=int(args.k_max),
+        gold_paths=paths,
+        recall_ks=recall_ks,
+        concurrency=int(args.concurrency),
+        skip_retrieval_hits=bool(args.skip_retrieval_hits),
+    )
+    summary = summarize(results, recall_ks=recall_ks, run_meta=run_meta)
 
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 

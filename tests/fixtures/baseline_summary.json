@@ -1,8 +1,12 @@
 {
-  "rows": 10,
-  "rag_calls_ok": 10,
+  "description": "Pinned from data_dev full eval (394 rows, dev KB, 2026-07). Use with --baseline-tolerance 0.05.",
   "rag_calls_failed": 0,
-  "mrr_rerank": 0.5,
-  "recall_at_5_rerank": 0.5,
-  "heuristic_quality_score_mean": 0.4
+  "mrr_rerank": 0.7467296395199857,
+  "mrr_retrieve": 0.785978652824766,
+  "recall_at_5_rerank": 0.8724489795918368,
+  "recall_at_5_retrieve": 0.923469387755102,
+  "recall_at_10_rerank": 0.9056122448979592,
+  "recall_at_40_rerank": 0.9540816326530612,
+  "heuristic_quality_score_mean": 0.47411167512690555,
+  "must_contain_pass_rate": 0.2620856234096692
 }

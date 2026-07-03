@@ -13,6 +13,7 @@ HIGHER_IS_BETTER = (
     "mean_rr_retrieve_when_found",
     "mean_rr_rerank_when_found",
     "heuristic_quality_score_mean",
+    "must_contain_pass_rate",
     "recall_at_5_retrieve",
     "recall_at_5_rerank",
     "recall_at_10_retrieve",

@@ -1,6 +1,9 @@
 # Generated eval reports (regenerate locally or store as CI artifacts)
 data_*/report/
 
+# Generated gold JSONL (regenerate via app.eval.gold_dataset; use tests/fixtures/ in git)
+data_*/gold_dataset/
+
 # Virtual environments
 .venv/
 venv/
