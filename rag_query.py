@@ -42,10 +42,16 @@ async def _rag_query_async(
     body = {
         "question": question,
         "collection_base": collection_base,
-        "request_id": request_id,
-        "session_id": session_id,
         "k": k,
         "k_max": k_max,
+        "stream": False,
+        "expand_on_not_found": False,
+        "include_follow_up_questions": False,
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "X-Request-Id": request_id,
+        "X-Session-Id": session_id,
     }
     attempts = max(1, max_attempts)
     for attempt in range(attempts):
@@ -53,7 +59,7 @@ async def _rag_query_async(
             r = await client.post(
                 url,
                 json=body,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
             if r.status_code >= 400:
                 if _retryable_http_status(r.status_code) and attempt + 1 < attempts:

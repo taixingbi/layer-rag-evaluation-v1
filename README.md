@@ -74,3 +74,23 @@ Gold file: JSON array of objects with at least:
 - `inference-output` — filled by RAG (often empty in the gold file)
 
 After `main.py`, each row includes RAG fields (e.g. answer, citations) and a `metrics` object when the metric step succeeds.
+
+## JSONL gold + retrieval eval (`rag_gold_eval/`)
+
+Build gold JSONL from ingested `points_*.json` (in sibling **layer-rag-ingest-v1**) and score retrieval + `must_contain` against `/v1/rag/query`:
+
+- [`docs/eval.md`](docs/eval.md) — end-to-end workflow
+- [`docs/gold-dataset.md`](docs/gold-dataset.md) — CLI reference
+
+```bash
+python3 rag_gold_eval/generate_gold_dataset.py \
+  --skip-consolidated-output \
+  --split-output-dir data_dev/gold_dataset
+
+python3 rag_gold_eval/run_eval.py \
+  --gold data_dev/gold_dataset/ \
+  --report-json data_dev/report/rag_eval_report.json \
+  --summary-json data_dev/report/rag_eval_summary.json
+```
+
+Gold artifacts: `data_dev/gold_dataset/`, `data_prod/gold_dataset/`, reports under `data_<env>/report/`.
