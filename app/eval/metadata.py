@@ -8,6 +8,12 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
+from app.eval.dataset_version import (
+    build_gold_dataset_version,
+    build_ingest_manifest_version,
+    resolve_ingest_manifest,
+)
+
 
 def _git_sha() -> str:
     try:
@@ -38,6 +44,9 @@ def build_run_metadata(
     recall_ks: list[int],
     concurrency: int,
     skip_retrieval_hits: bool,
+    gold_rows_loaded: int,
+    gold_rows_evaluated: int,
+    ingest_manifest_path: str | None = None,
     enable_llm_judge: bool = False,
     llm_judge_concurrency: int | None = None,
     llm_judge_model: str | None = None,
@@ -55,7 +64,15 @@ def build_run_metadata(
         "recall_at_k": recall_ks,
         "skip_retrieval_hits": skip_retrieval_hits,
         "gold_paths": [str(p) for p in gold_paths],
+        "gold_rows_loaded": gold_rows_loaded,
+        "gold_rows_evaluated": gold_rows_evaluated,
     }
+    meta.update(build_gold_dataset_version(gold_paths))
+
+    manifest = resolve_ingest_manifest(cli_path=ingest_manifest_path, gold_paths=gold_paths)
+    if manifest is not None:
+        meta.update(build_ingest_manifest_version(manifest))
+
     if enable_llm_judge:
         meta["enable_llm_judge"] = True
         meta["llm_judge_concurrency"] = llm_judge_concurrency

@@ -59,3 +59,28 @@ def compare_summaries(
         failures.append(f"rag_calls_failed: {cur_fail} > baseline {base_fail}")
 
     return failures
+
+
+def compare_dataset_versions(
+    current: dict[str, Any],
+    baseline: dict[str, Any],
+) -> list[str]:
+    """Fail when pinned baseline specifies dataset fingerprints that differ."""
+    failures: list[str] = []
+    cur_meta = current.get("run_meta") if isinstance(current.get("run_meta"), dict) else {}
+    base_meta = baseline.get("run_meta") if isinstance(baseline.get("run_meta"), dict) else {}
+
+    for key in ("gold_dataset_sha256", "ingest_manifest_sha256"):
+        expected = baseline.get(key) or base_meta.get(key)
+        if not expected:
+            continue
+        actual = cur_meta.get(key) or current.get(key)
+        if actual != expected:
+            failures.append(f"{key}: {actual!r} != baseline {expected!r}")
+
+    base_collection = baseline.get("collection_base") or base_meta.get("collection_base")
+    cur_collection = cur_meta.get("collection_base") or current.get("collection_base")
+    if base_collection and cur_collection and cur_collection != base_collection:
+        failures.append(f"collection_base: {cur_collection!r} != baseline {base_collection!r}")
+
+    return failures

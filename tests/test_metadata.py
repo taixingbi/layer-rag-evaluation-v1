@@ -17,7 +17,13 @@ def test_build_run_metadata_fields():
         recall_ks=[5, 10],
         concurrency=4,
         skip_retrieval_hits=False,
+        gold_rows_loaded=10,
+        gold_rows_evaluated=5,
     )
+    assert meta["gold_rows_loaded"] == 10
+    assert meta["gold_rows_evaluated"] == 5
+    assert meta["gold_dataset_sha256"]
+    assert meta["gold_dataset_files"]
     assert meta["rag_base_url"] == "http://rag.test"
     assert meta["collection_base"] == "taixing_knowledge"
     assert meta["k"] == 5

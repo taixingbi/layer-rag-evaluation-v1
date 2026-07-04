@@ -84,6 +84,7 @@ def hit_at_k(rank: int | None, k: int) -> bool:
 
 
 def precision_at_k(rank: int | None, k: int) -> float:
+    """Single relevant doc per row: precision is 1/k if found in top-k, else 0."""
     if k <= 0:
         return 0.0
     return (1.0 / float(k)) if hit_at_k(rank, k) else 0.0

@@ -6,6 +6,7 @@ End-to-end workflow and CLI reference: ingest KB → generate gold JSONL → sco
 **Code:** `app/eval/gold_dataset.py`, `app/eval/run_eval.py`  
 **Points input:** [layer-rag-ingest-v1](../../layer-rag-ingest-v1) `data_<env>/data1/processed/points_*.json`  
 **Outputs:** `data_<env>/gold_dataset/` and `data_<env>/report/` in this repo  
+**Versioning:** [version.md](version.md) — gold + ingest fingerprints, baseline pinning  
 **RAG HTTP contract:** [layer-rag-query-v1/docs/eval.md](../../layer-rag-query-v1/docs/eval.md)
 
 ---
@@ -167,7 +168,7 @@ Runs **`POST {rag_base_url}/v1/rag/query`** per gold row, then scores the respon
 1. **`must_contain`** — Each fragment in RAG `answer` (case-insensitive). Empty list skips this axis.
 2. **`source` (single-hop)** — Gold `source` must appear in a citation (unless `multi` / `negative`).
 3. **`required_sources` (multi-hop)** — Every listed source in citations.
-4. **`retrieval_hits`** — Gold UUID `id` vs `retrieval_hits[].chunk_id` in `retrieve` / `rerank` → rank, RR, MRR, Recall@k, Precision@k, NDCG@k, F1@k (`--recall-at-k`, default `5,10,40`). Non-UUID ids → `retrieval_eval_skipped`.
+4. **`retrieval_hits`** — Gold UUID `id` vs `retrieval_hits[].chunk_id` in `retrieve` / `rerank` → rank, RR, **MRR**, **Recall@k** (primary), Precision@k, NDCG@k, F1@k. Each row has **one relevant document**; Precision@k = `1/k` when the gold chunk is in top-k (not multi-source precision). Non-UUID ids → `retrieval_eval_skipped`.
 5. **`heuristic_quality`** — Proxy dimensions (`correct`, `faithful`, …) from `must_contain` + citations; always computed.
 6. **`llm_judge`** (optional, `--enable-llm-judge`) — LLM scores the same five dimensions semantically vs gold reference answer; per-row `llm_judge`, `llm_judge_score`, `llm_judge_reason`.
 
@@ -192,6 +193,7 @@ Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X
 | `--llm-judge-base-url` | `LLM_JUDGE_URL` / `INFERENCE_URL` / `CHAT_BASE_URL` | Chat API for judge |
 | `--llm-judge-model` | `LLM_JUDGE_MODEL` / `CHAT_MODEL` | Judge model name |
 | `--llm-judge-concurrency` | `10` | Max concurrent judge requests |
+| `--ingest-manifest` | auto from `data_<env>` | Ingest manifest path for `ingest_manifest_sha256` in `run_meta` |
 
 By default only **stdout** (JSON summary). Reports under `data_<env>/report/` are gitignored; pass `--summary-json` / `--report-json` to persist locally.
 
@@ -240,9 +242,10 @@ After re-chunk / re-ingest, **regenerate gold** or retrieval metrics will miss.
 
 | Field | Meaning |
 |-------|---------|
-| `run_meta` | Git SHA, package version, k/k_max, collection, gold paths, UTC timestamp |
-| `mrr_retrieve` / `mrr_rerank` | Mean reciprocal rank |
-| `recall_at_5_*` | Gold in top-5 |
+| `run_meta` | Git SHA, package version, k/k_max, collection, gold paths, row counts, **`gold_dataset_sha256`**, **`ingest_manifest_sha256`** (when manifest found), UTC timestamp |
+| `mrr_retrieve` / `mrr_rerank` | Mean reciprocal rank (**primary retrieval**) |
+| `recall_at_5_*` | Gold chunk in top-k (**primary retrieval**) |
+| `precision_at_5_*` | Single-doc precision (`1/k` when hit; not multi-source) |
 | `must_contain_pass` / `must_contain_scored_rows` | Substring checks |
 | `must_contain_pass_rate` | Fraction of scored rows passing all fragments |
 | `heuristic_quality_score_mean` | Proxy answer quality (always) |
@@ -303,7 +306,20 @@ python -m app.eval.run_eval \
   --baseline-tolerance 0.05
 ```
 
-Exits non-zero if key metrics (e.g. `recall_at_5_rerank`, `mrr_rerank`) drop more than tolerance below baseline.
+Exits non-zero if key metrics (e.g. `recall_at_5_rerank`, `mrr_rerank`, `llm_judge_score_mean`) drop more than tolerance below baseline.
+
+When the baseline JSON includes **`gold_dataset_sha256`** or **`ingest_manifest_sha256`** (copy from a known-good `run_meta`), the gate also fails if the current eval used different gold or ingest inputs. Details: [version.md](version.md).
+
+Pin a baseline after a good run:
+
+```bash
+# Copy metrics + run_meta fingerprints from rag_eval_summary.json into tests/fixtures/baseline_summary.json
+jq '{rag_calls_failed, mrr_rerank, recall_at_5_rerank, llm_judge_score_mean,
+     gold_dataset_sha256: .run_meta.gold_dataset_sha256,
+     ingest_manifest_sha256: .run_meta.ingest_manifest_sha256,
+     collection_base: .run_meta.collection_base}' \
+  data_dev/report/rag_eval_summary.json
+```
 
 ---
 
@@ -337,8 +353,9 @@ Scheduled smoke: weekly, one-row fixture (`tests/fixtures/gold_single_row.jsonl`
 1. Ingest / upsert ([data1.sh](../../layer-rag-ingest-v1/scripts/data1.sh) or upsert only).
 2. Regenerate gold → `data_dev/gold_dataset/`.
 3. `run_eval` with `--report-json` + `--summary-json`.
-4. Track `mrr_rerank`, `recall_at_5_rerank`, `must_contain_pass`, `latency_ms_p95`.
-5. Pin ingest SHA, `collection_base`, `k`, `k_max`, embed model.
+4. Track `mrr_rerank`, `recall_at_5_rerank`, `llm_judge_score_mean` (when judge enabled), `latency_ms_p95`.
+5. Pin **`gold_dataset_sha256`** and **`ingest_manifest_sha256`** from `run_meta` in baseline JSON.
+6. Pin ingest SHA, `collection_base`, `k`, `k_max`, embed model.
 
 ---
 

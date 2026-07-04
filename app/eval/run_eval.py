@@ -28,7 +28,7 @@ from app.core.config import (
     get_rag_base_url,
     get_rag_collection_base,
 )
-from app.eval.baseline import compare_summaries, load_baseline
+from app.eval.baseline import compare_dataset_versions, compare_summaries, load_baseline
 from app.eval.llm_judge import judge_answer_async
 from app.eval.metadata import build_run_metadata
 from app.eval.scoring import (
@@ -312,6 +312,14 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_LLM_JUDGE_CONCURRENCY,
         help="Max concurrent LLM judge requests (default: %(default)s).",
     )
+    p.add_argument(
+        "--ingest-manifest",
+        default="",
+        help=(
+            "Ingest manifest JSON for dataset versioning (sha256 in run_meta). "
+            "Default: auto-detect ../layer-rag-ingest-v1/data_<env>/data1/processed/ingest_manifest_latest.json"
+        ),
+    )
     return p.parse_args()
 
 
@@ -388,6 +396,9 @@ def main() -> None:
         recall_ks=recall_ks,
         concurrency=int(args.concurrency),
         skip_retrieval_hits=bool(args.skip_retrieval_hits),
+        gold_rows_loaded=len(rows),
+        gold_rows_evaluated=len(results),
+        ingest_manifest_path=(args.ingest_manifest or None),
         enable_llm_judge=enable_llm_judge,
         llm_judge_concurrency=int(args.llm_judge_concurrency) if enable_llm_judge else None,
         llm_judge_model=llm_judge_model if enable_llm_judge else None,
@@ -419,6 +430,7 @@ def main() -> None:
             baseline,
             tolerance=float(args.baseline_tolerance),
         )
+        regressions.extend(compare_dataset_versions(summary, baseline))
         if regressions:
             for msg in regressions:
                 print(msg, file=sys.stderr)
