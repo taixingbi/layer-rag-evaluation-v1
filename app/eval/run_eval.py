@@ -29,6 +29,7 @@ from app.core.config import (
     get_rag_collection_base,
 )
 from app.eval.baseline import compare_dataset_versions, compare_summaries, load_baseline
+from app.eval.dataset_version import infer_ingest_env
 from app.eval.llm_judge import judge_answer_async
 from app.eval.metadata import build_run_metadata
 from app.eval.scoring import (
@@ -40,6 +41,13 @@ from app.eval.scoring import (
     required_sources_hit,
     retrieval_row_fields,
     summarize,
+)
+from app.eval.supabase_store import (
+    baseline_row_to_compare_dict,
+    fetch_active_baseline,
+    pin_baseline,
+    record_run,
+    supabase_configured,
 )
 from app.http.rag import rag_query_async
 
@@ -320,7 +328,84 @@ def parse_args() -> argparse.Namespace:
             "Default: auto-detect ../layer-rag-ingest-v1/data_<env>/data1/processed/ingest_manifest_latest.json"
         ),
     )
+    p.add_argument(
+        "--record-supabase",
+        action="store_true",
+        help="Insert this run into Supabase rag_eval_runs (requires SUPABASE_* in .env).",
+    )
+    p.add_argument(
+        "--supabase-env",
+        default="",
+        help="Env label for Supabase rows (default: infer from data_dev/… gold paths, else dev).",
+    )
+    p.add_argument(
+        "--baseline-supabase",
+        action="store_true",
+        help="Regression gate vs active rag_eval_baselines row for --supabase-env.",
+    )
+    p.add_argument(
+        "--baseline-supabase-name",
+        default="",
+        help="With --baseline-supabase, use named baseline instead of active=true.",
+    )
+    p.add_argument(
+        "--pin-baseline-supabase",
+        default="",
+        help="Save this summary as new active baseline (name) in rag_eval_baselines.",
+    )
+    p.add_argument(
+        "--supabase-notes",
+        default="",
+        help="Optional notes stored on Supabase run/baseline row.",
+    )
     return p.parse_args()
+
+
+def _resolve_supabase_env(explicit: str, gold_paths: list[Path]) -> str:
+    value = (explicit or "").strip()
+    if value:
+        return value
+    inferred = infer_ingest_env(gold_paths)
+    return inferred or "dev"
+
+
+def _run_regression_checks(
+    summary: dict[str, Any],
+    *,
+    baseline_json_path: str,
+    baseline_supabase: bool,
+    baseline_supabase_name: str,
+    supabase_env: str,
+    tolerance: float,
+) -> tuple[list[str], dict[str, Any] | None]:
+    """Return (regression messages, supabase baseline row if used)."""
+    regressions: list[str] = []
+    supabase_baseline_row: dict[str, Any] | None = None
+
+    if baseline_json_path:
+        baseline_path = Path(baseline_json_path)
+        if not baseline_path.is_file():
+            raise SystemExit(f"Baseline file not found: {baseline_path}")
+        baseline = load_baseline(baseline_path)
+        regressions.extend(compare_summaries(summary, baseline, tolerance=tolerance))
+        regressions.extend(compare_dataset_versions(summary, baseline))
+
+    if baseline_supabase:
+        if not supabase_configured(env=supabase_env):
+            raise SystemExit(
+                f"Supabase credentials required for --baseline-supabase (env={supabase_env}). "
+                "Set SUPABASE_URL_<ENV> and SUPABASE_SECRET_KEY_<ENV> in .env."
+            )
+        name = (baseline_supabase_name or "").strip() or None
+        supabase_baseline_row = fetch_active_baseline(env=supabase_env, name=name)
+        if not supabase_baseline_row:
+            label = name or "active"
+            raise SystemExit(f"No Supabase baseline found for env={supabase_env} ({label})")
+        baseline = baseline_row_to_compare_dict(supabase_baseline_row)
+        regressions.extend(compare_summaries(summary, baseline, tolerance=tolerance))
+        regressions.extend(compare_dataset_versions(summary, baseline))
+
+    return regressions, supabase_baseline_row
 
 
 def _resolve_llm_judge_base_url(cli_value: str | None, *, required: bool) -> str:
@@ -420,21 +505,56 @@ def main() -> None:
         sum_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         logger.info("Wrote summary: %s", sum_path)
 
-    if args.baseline_json:
-        baseline_path = Path(args.baseline_json)
-        if not baseline_path.is_file():
-            raise SystemExit(f"Baseline file not found: {baseline_path}")
-        baseline = load_baseline(baseline_path)
-        regressions = compare_summaries(
+    supabase_env = _resolve_supabase_env(args.supabase_env, paths)
+    pin_name = (args.pin_baseline_supabase or "").strip()
+    if pin_name:
+        if not supabase_configured(env=supabase_env):
+            raise SystemExit(
+                f"Supabase credentials required for --pin-baseline-supabase (env={supabase_env}). "
+                "Set SUPABASE_URL_<ENV> and SUPABASE_SECRET_KEY_<ENV> in .env."
+            )
+        pinned = pin_baseline(
             summary,
-            baseline,
-            tolerance=float(args.baseline_tolerance),
+            env=supabase_env,
+            name=pin_name,
+            notes=(args.supabase_notes or None),
         )
-        regressions.extend(compare_dataset_versions(summary, baseline))
-        if regressions:
-            for msg in regressions:
-                print(msg, file=sys.stderr)
-            raise SystemExit(f"Baseline regression: {len(regressions)} metric(s) below threshold.")
+        logger.info("Pinned Supabase baseline: id=%s name=%s env=%s", pinned.get("id"), pin_name, supabase_env)
+
+    regressions, supabase_baseline_row = _run_regression_checks(
+        summary,
+        baseline_json_path=(args.baseline_json or ""),
+        baseline_supabase=bool(args.baseline_supabase),
+        baseline_supabase_name=str(args.baseline_supabase_name or ""),
+        supabase_env=supabase_env,
+        tolerance=float(args.baseline_tolerance),
+    )
+    passed = len(regressions) == 0
+
+    if args.record_supabase or bool(args.baseline_supabase):
+        if not supabase_configured(env=supabase_env):
+            raise SystemExit(
+                f"Supabase credentials required (env={supabase_env}). "
+                "Set SUPABASE_URL_<ENV> and SUPABASE_SECRET_KEY_<ENV> in .env."
+            )
+
+    if args.record_supabase:
+        baseline_id = str(supabase_baseline_row["id"]) if supabase_baseline_row and supabase_baseline_row.get("id") else None
+        report_path = str(args.report_json) if args.report_json else None
+        inserted = record_run(
+            summary,
+            env=supabase_env,
+            baseline_id=baseline_id,
+            passed=passed,
+            report_storage_path=report_path,
+            notes=(args.supabase_notes or None),
+        )
+        logger.info("Recorded Supabase eval run: id=%s pass=%s", inserted.get("id"), passed)
+
+    if regressions:
+        for msg in regressions:
+            print(msg, file=sys.stderr)
+        raise SystemExit(f"Baseline regression: {len(regressions)} metric(s) below threshold.")
 
 
 if __name__ == "__main__":

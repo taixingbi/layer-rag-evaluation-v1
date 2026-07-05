@@ -110,3 +110,92 @@ def get_llm_judge_timeout() -> float:
         return max(1.0, float(raw))
     except ValueError:
         return DEFAULT_LLM_JUDGE_TIMEOUT
+
+
+def get_supabase_url(*, required: bool = False, env: str | None = None) -> str:
+    """Project URL. With ``env=dev|prod``, prefers ``SUPABASE_URL_DEV`` / ``SUPABASE_URL_PROD``."""
+    suffix = _supabase_env_suffix(env)
+    candidates: list[str] = []
+    if suffix:
+        candidates.append(f"SUPABASE_URL_{suffix}")
+    candidates.append("SUPABASE_URL")
+    for name in candidates:
+        url = (os.getenv(name) or "").strip().rstrip("/")
+        if url:
+            return url
+    if required:
+        if suffix:
+            raise ValueError(
+                f"SUPABASE_URL_{suffix} (or SUPABASE_URL) is required for --supabase-env {env}."
+            )
+        raise ValueError(
+            "SUPABASE_URL is required. Set it in `.env` for --record-supabase / --baseline-supabase."
+        )
+    return ""
+
+
+def _supabase_env_suffix(env: str | None) -> str | None:
+    if not env:
+        return None
+    normalized = env.strip().lower()
+    mapping = {"dev": "DEV", "prod": "PROD", "qa": "QA"}
+    return mapping.get(normalized)
+
+
+def _supabase_secret_key_names(suffix: str | None) -> list[str]:
+    names: list[str] = []
+    if suffix:
+        names.extend(
+            (
+                f"SUPABASE_SECRET_KEY_{suffix}",
+                f"SUPABASE_SERVICE_ROLE_KEY_{suffix}",
+                f"SUPABASE_SERVICE_KEY_{suffix}",
+            )
+        )
+    names.extend(
+        (
+            "SUPABASE_SECRET_KEY",
+            "SUPABASE_SERVICE_ROLE_KEY",
+            "SUPABASE_SERVICE_KEY",
+        )
+    )
+    return names
+
+
+def get_supabase_service_key(*, required: bool = False, env: str | None = None) -> str:
+    """Elevated Supabase key for server-side eval persistence.
+
+    With ``env=dev|prod``, prefers ``SUPABASE_SECRET_KEY_DEV`` / ``SUPABASE_SECRET_KEY_PROD``
+    (and legacy ``SUPABASE_SERVICE_ROLE_KEY_*``), then falls back to generic names.
+    """
+    suffix = _supabase_env_suffix(env)
+    for name in _supabase_secret_key_names(suffix):
+        key = (os.getenv(name) or "").strip()
+        if key:
+            return key
+    if required:
+        if suffix:
+            raise ValueError(
+                f"SUPABASE_SECRET_KEY_{suffix} (or SUPABASE_SECRET_KEY) is required for "
+                f"--supabase-env {env}. Set a secret key from Dashboard → Settings → API Keys."
+            )
+        raise ValueError(
+            "SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) is required for Supabase eval "
+            "persistence. Set a secret key from Dashboard → Settings → API Keys."
+        )
+    return key
+
+
+def get_supabase_secret_key(*, required: bool = False, env: str | None = None) -> str:
+    """Alias for :func:`get_supabase_service_key` (Supabase v2 naming)."""
+    return get_supabase_service_key(required=required, env=env)
+
+
+def supabase_env_configured(env: str) -> bool:
+    """True when URL + secret key are set for the given eval env label."""
+    try:
+        get_supabase_url(required=True, env=env)
+        get_supabase_service_key(required=True, env=env)
+        return True
+    except ValueError:
+        return False

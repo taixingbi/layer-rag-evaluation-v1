@@ -7,6 +7,7 @@ End-to-end workflow and CLI reference: ingest KB → generate gold JSONL → sco
 **Points input:** [layer-rag-ingest-v1](../../layer-rag-ingest-v1) `data_<env>/data1/processed/points_*.json`  
 **Outputs:** `data_<env>/gold_dataset/` and `data_<env>/report/` in this repo  
 **Versioning:** [version.md](version.md) — gold + ingest fingerprints, baseline pinning  
+**Supabase:** [supabase.md](supabase.md) — eval run history + DB baselines  
 **RAG HTTP contract:** [layer-rag-query-v1/docs/eval.md](../../layer-rag-query-v1/docs/eval.md)
 
 ---
@@ -194,6 +195,12 @@ Requests use `collection_base`, `k`, `k_max`. Correlation ids in **headers** (`X
 | `--llm-judge-model` | `LLM_JUDGE_MODEL` / `CHAT_MODEL` | Judge model name |
 | `--llm-judge-concurrency` | `10` | Max concurrent judge requests |
 | `--ingest-manifest` | auto from `data_<env>` | Ingest manifest path for `ingest_manifest_sha256` in `run_meta` |
+| `--record-supabase` | off | Insert run into `rag_eval_runs` |
+| `--baseline-supabase` | off | Gate vs active `rag_eval_baselines` row |
+| `--pin-baseline-supabase` | off | Save summary as new active baseline (name) |
+| `--supabase-env` | infer from gold path | Env label (`dev`, `qa`, `prod`); selects `SUPABASE_*_<ENV>` in `.env` |
+
+See [supabase.md](supabase.md) for Supabase setup. **Dev vs prod:** keep `--gold`, `--summary-json` / `--report-json`, and `--supabase-env` aligned (`data_dev/…` + `dev`, or `data_prod/…` + `prod`).
 
 By default only **stdout** (JSON summary). Reports under `data_<env>/report/` are gitignored; pass `--summary-json` / `--report-json` to persist locally.
 
